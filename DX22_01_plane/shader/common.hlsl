@@ -1,12 +1,12 @@
-cbuffer WorldBuffer : register(b0)
+cbuffer WorldBuffer : register(b0)  // world
 {
 	matrix World;
 }
-cbuffer ViewBuffer : register(b1)
+cbuffer ViewBuffer : register(b1)  // View
 {
 	matrix View;
 }
-cbuffer ProjectionBuffer : register(b2)
+cbuffer ProjectionBuffer : register(b2) // Projection
 {
 	matrix Projection;
 }
@@ -38,4 +38,20 @@ struct LIGHT
 cbuffer LightBuffer : register(b3)
 {
     LIGHT Light;
+};
+
+struct MATERIAL
+{
+    float4  Ambient;        //環境反射
+    float4  Diffuse;        //拡散反射（≒カラー
+    float4  Specular;       //鏡面反射
+    float4  Emission;       //発光
+    float   Shiness;        //光沢の滑らかさ
+    bool    TextureEnable;  //テクスチャの使うか否かのフラグ
+    bool2   Dummy;          //alignment padding用
+};
+
+cbuffer MaterialBuffer : register(b4)
+{
+    MATERIAL Material;
 };

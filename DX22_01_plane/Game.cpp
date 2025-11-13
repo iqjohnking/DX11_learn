@@ -24,7 +24,9 @@ void Game::Init()
 
 	// テストオブジェクト初期化
 	m_Plane.Init();
-	m_Cube.Init();
+	//m_Cube.Init();
+	m_Model.Init();
+	m_Ball.Init();
 }
 
 // 更新
@@ -35,7 +37,9 @@ void Game::Update()
 
 	// テストオブジェクト更新
 	m_Plane.Update();
-	m_Cube.Update();
+	//m_Cube.Update();
+	m_Model.Update();
+	m_Ball.Update();
 }
 
 // 描画
@@ -46,7 +50,9 @@ void Game::Draw()
 
 	// テストオブジェクト描画
 	m_Plane.Draw(&m_Camera);
-	m_Cube.Draw(&m_Camera);
+	//m_Cube.Draw(&m_Camera);
+	//m_Model.Draw(&m_Camera);
+	m_Ball.Draw(&m_Camera);
 
 	// 描画後処理
 	Renderer::DrawEnd();
@@ -60,7 +66,9 @@ void Game::Uninit()
 
 	// テストオブジェクト終了処理
 	m_Plane.Uninit();
-	m_Cube.Uninit();
+	//m_Cube.Uninit();
+	m_Model.Uninit();
+	m_Ball.Uninit();
 
 	// 描画終了処理
 	Renderer::Uninit();
