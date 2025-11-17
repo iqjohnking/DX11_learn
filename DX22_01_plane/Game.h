@@ -1,10 +1,8 @@
 #pragma once
 #include <iostream>
 
-#include "TestPlane.h"
-#include "TestCube.h"
-#include "TestModel.h"
 #include "GolfBall.h"
+#include "Ground.h"
 
 class Game
 {
@@ -14,10 +12,10 @@ private:
 	Camera  m_Camera;
 
 	// テストオブジェクト
-	TestPlane m_Plane;
-	TestCube m_Cube;
-	TestModel m_Model;
 	GolfBall m_Ball;
+
+	//Objects
+	std::vector<std::unique_ptr<Object>> m_ObjectList;
 
 public:
 	Game(); // コンストラクタ

@@ -16,7 +16,7 @@ void GolfBall::Init()
 
 	//テクスチャディレクトリ
 	//std::string texDirectory = "assets/model/cylinder";
-	std::string texDirectory = "assets/model/golf_ball";
+	std::string texDirectory = "assets/model/golfball";
 
 	//Meshを読み込む
 	std::string tmpStr1(reinterpret_cast<const char*>(modelFile.c_str()), modelFile.size());
@@ -53,6 +53,10 @@ void GolfBall::Init()
 	m_Scale.x = 5;
 	m_Scale.y = 5;
 	m_Scale.z = 5;
+
+	//初速度
+	m_Velocity.x = 0.00f;
+	m_Position.x = -10.00f;
 }
 
 //=======================================
@@ -60,7 +64,23 @@ void GolfBall::Init()
 //=======================================
 void GolfBall::Update()
 {
+	//速度が0に近づいたら止まる
+	if (m_Velocity.LengthSquared() < 0.1f)
+	{
+		m_Velocity = Vector3(0.0f, 0.0f, 0.0f);
+	}
+	else {
+		//何割に減速度（１フレーム
+		float decelerationPower = 0.1f;
 
+		Vector3 deceleration = -m_Velocity;					//速度の逆ベクトルを計算
+		deceleration.Normalize();							//ベクトルを正規化
+		m_Acceleration = deceleration * decelerationPower;	//加速度＝逆速度*何割に減速度
+		//加速度を速度に加算
+		m_Velocity += m_Acceleration;
+	}
+	//速度を座標に加算
+	m_Position += m_Velocity;
 }
 
 //=======================================
@@ -70,6 +90,8 @@ void GolfBall::Draw(Camera* cam)
 {
 	//カメラを選択する
 	cam->SetCamera();
+	cam->SetTarget(m_Position); //カメラに指示して、このGolfBallの位置を照準させよう。
+	cam->SetTargetYaw(GetYaw());
 
 	// SRT情報作成
 	Matrix r = Matrix::CreateFromYawPitchRoll(m_Rotation.y, m_Rotation.x, m_Rotation.z);
@@ -110,3 +132,10 @@ void GolfBall::Uninit()
 {
 
 }
+
+float GolfBall::GetYaw()
+{
+	//2Dベクトル → 角度（ラジアン）。
+	return atan2f(m_Rotation.x, m_Rotation.z);
+}
+

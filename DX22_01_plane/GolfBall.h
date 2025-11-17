@@ -1,15 +1,23 @@
 #pragma once
 
 #include "Object.h"
-#include "Texture.h"
 #include "MeshRenderer.h"
 #include "StaticMesh.h"
-#include "utility.h"
+#include "Texture.h"
 #include "Material.h"
+#include "utility.h" //文字列変換用
 
 class GolfBall :public Object
 {
 private:
+	//速度
+	DirectX::SimpleMath::Vector3 m_Velocity = DirectX::SimpleMath::Vector3(0.0f, 0.0f, 0.0f);
+	//加速度
+	DirectX::SimpleMath::Vector3 m_Acceleration = DirectX::SimpleMath::Vector3(0.0f, 0.0f, 0.0f);
+	
+	//キャラクターの向き
+	//DirectX::SimpleMath::Vector3 playerDir = DirectX::SimpleMath::Vector3(0.0f, 0.0f, 1.0f);
+
 	// 描画の為の情報（メッシュに関わる情報）
 	MeshRenderer m_MeshRenderer; // 頂点バッファ・インデックスバッファ・インデックス数
 
@@ -23,5 +31,14 @@ public:
 	void Update();
 	void Draw(Camera* cam);
 	void Uninit();
+
+
+	/////////////////////////////////////////
+
+
+	float GetYaw();
+
+
+
 };
 

@@ -139,7 +139,9 @@
     <ClCompile Include="AssimpPerse.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Game.cpp" />
+    <ClCompile Include="GameScene.cpp" />
     <ClCompile Include="GolfBall.cpp" />
+    <ClCompile Include="Ground.cpp" />
     <ClCompile Include="input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Object.cpp" />
@@ -159,7 +161,9 @@
     <ClInclude Include="AssimpPerse.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Game.h" />
+    <ClInclude Include="GameScene.h" />
     <ClInclude Include="GolfBall.h" />
+    <ClInclude Include="Ground.h" />
     <ClInclude Include="IndexBuffer.h" />
     <ClInclude Include="input.h" />
     <ClInclude Include="main.h" />
