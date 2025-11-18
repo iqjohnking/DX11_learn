@@ -26,6 +26,10 @@ private:
 	std::vector<SUBSET> m_subsets;
 	std::vector<std::unique_ptr<Texture>> m_Textures; // テクスチャ
 
+
+	// ← 追加：カメラ参照を保持
+	Camera* m_Cam = nullptr;
+
 public:
 	void Init();
 	void Update();
@@ -35,6 +39,7 @@ public:
 
 	/////////////////////////////////////////
 
+	void SetCamera(Camera* cam) { m_Cam = cam; }  // ← 追加：カメラを注入
 
 	float GetYaw();
 

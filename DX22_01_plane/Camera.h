@@ -49,6 +49,8 @@ public:
 	///////////////////
 
 	void SetTarget(DirectX::SimpleMath::Vector3 target);
+	DirectX::SimpleMath::Vector3 GetTarget();
+	DirectX::SimpleMath::Vector3 GetPosition();
 	void SetTargetYaw(float yaw);
 
 	void ResetBehindTarget();

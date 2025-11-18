@@ -11,6 +11,12 @@ HWND       Application::m_hWnd;    // ウィンドウハンドル
 uint32_t   Application::m_Width;   // ウィンドウの横幅
 uint32_t   Application::m_Height;  // ウィンドウの縦幅
 
+
+extern "C" {
+    __declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+    __declspec(dllexport) int   AmdPowerXpressRequestHighPerformance = 0x00000001;
+}
+
 //-----------------------------------------------------------------------------
 // コンストラクタ
 //-----------------------------------------------------------------------------
@@ -41,12 +47,12 @@ void Application::Run()
 
     UninitApp(); // 終了処理
 }
-
 //-----------------------------------------------------------------------------
 // 初期化処理
 //-----------------------------------------------------------------------------
 bool Application::InitApp()
 {
+
     // インスタンスハンドルを取得
     auto hInst = GetModuleHandle(nullptr);
     if (hInst == nullptr)

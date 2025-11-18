@@ -138,6 +138,16 @@ void Camera::SetTarget(DirectX::SimpleMath::Vector3 target)
 	m_Target = target;
 }
 
+DirectX::SimpleMath::Vector3 Camera::GetTarget()
+{
+	return m_Target;
+}
+
+DirectX::SimpleMath::Vector3 Camera::GetPosition()
+{
+	return m_Position;
+}
+
 void Camera::SetTargetYaw(float yaw)
 {
 	m_TargetYaw = yaw;

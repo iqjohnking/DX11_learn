@@ -26,6 +26,9 @@ void Game::Init()
 
 	//オブジェクトを追加
 	m_ObjectList.emplace_back(new GolfBall);
+	auto* ball = static_cast<GolfBall*>(m_ObjectList.back().get()); //ほかのほうがいいかな？
+	ball->SetCamera(&m_Camera);
+
 	m_ObjectList.emplace_back(new Ground);
 
 	//オブジェクト初期化

@@ -1,4 +1,5 @@
 #include "GolfBall.h"
+#include "Input.h"
 
 using namespace DirectX::SimpleMath;
 
@@ -64,6 +65,91 @@ void GolfBall::Init()
 //=======================================
 void GolfBall::Update()
 {
+	DirectX::SimpleMath::Vector3 camFwd = m_Cam->GetTarget() - m_Cam->GetPosition();
+	camFwd.y = 0.0f; //y軸成分を無視して水平ベクトルにする
+	if (camFwd.LengthSquared() > 0) camFwd.Normalize();
+
+
+	DirectX::SimpleMath::Vector3 up(0.0f, 1.0f, 0.0f);
+	//「上向き × 前向き = 右向き」的外積（クロス積）
+	DirectX::SimpleMath::Vector3 camRight(
+		up.y * camFwd.z - up.z * camFwd.y,
+		up.z * camFwd.x - up.x * camFwd.z,
+		up.x * camFwd.y - up.y * camFwd.x
+	);
+	if (camRight.LengthSquared() > 0.0f) {	camRight.Normalize();}
+
+	// 1) 
+	DirectX::SimpleMath::Vector3 dir(0, 0, 0);
+	if (Input::GetKeyPress(VK_A)) dir -= camRight; // 左 = 反向右
+	if (Input::GetKeyPress(VK_D)) dir += camRight; // 右
+	if (Input::GetKeyPress(VK_W)) dir += camFwd;   // 前
+	if (Input::GetKeyPress(VK_S)) dir -= camFwd;   // 後
+
+	// 
+	const float accelPerFrame = 0.35f;  // 
+	const float maxSpeed = 1.80f;		// 
+	const float dragFactor = 0.85f;		// 
+	const float stopEpsilon = 0.001f;	// 
+
+	// 2) 
+	if (dir.LengthSquared() > 0.0f)
+	{
+		dir.Normalize();                       // 
+		m_Velocity += dir * accelPerFrame;     // 
+
+		// 最高速度限制
+		float spd2 = m_Velocity.LengthSquared();
+		if (spd2 > (maxSpeed * maxSpeed)) {
+			m_Velocity.Normalize();
+			m_Velocity *= maxSpeed;
+		}
+	}
+	else
+	{
+		// 
+		m_Velocity *= dragFactor;
+
+		// 
+		if (m_Velocity.LengthSquared() < stopEpsilon) {
+			m_Velocity = DirectX::SimpleMath::Vector3::Zero;
+		}
+	}
+
+	// 3) 用速度更新位置
+	m_Position += m_Velocity;
+
+	// ---- face to move direction (XZ) ----
+	const float turnSpeedPerFrame = 0.314f;        // 
+	const float moveEpsilon2 = 1e-6f;        // 
+
+	if (m_Velocity.LengthSquared() > moveEpsilon2)
+	{
+		// 
+		float targetYaw = std::atan2(m_Velocity.x, m_Velocity.z);
+		float currentYaw = m_Rotation.y;
+
+		// 
+		float delta = targetYaw - currentYaw;
+		const float	TWO_PI = 6.283185307f;
+		const float		PI = 3.1415926535;
+
+		while (delta > PI) delta -= TWO_PI;
+		while (delta < -PI) delta += TWO_PI;
+
+		// 
+		if (delta > turnSpeedPerFrame) delta = turnSpeedPerFrame;
+		if (delta < -turnSpeedPerFrame) delta = -turnSpeedPerFrame;
+
+		currentYaw += delta;
+
+		// 
+		if (currentYaw > PI) currentYaw -= TWO_PI;
+		if (currentYaw < -PI) currentYaw += TWO_PI;
+
+		m_Rotation.y = currentYaw;
+	}
+	 /*
 	//速度が0に近づいたら止まる
 	if (m_Velocity.LengthSquared() < 0.1f)
 	{
@@ -81,6 +167,7 @@ void GolfBall::Update()
 	}
 	//速度を座標に加算
 	m_Position += m_Velocity;
+	 */
 }
 
 //=======================================
