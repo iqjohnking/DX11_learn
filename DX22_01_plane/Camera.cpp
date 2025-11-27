@@ -5,8 +5,6 @@
 
 using namespace DirectX::SimpleMath;
 
-
-
 //=======================================
 //初期化処理
 //=======================================
@@ -43,8 +41,8 @@ void Camera::Update()
 		m_CameraDirV = LerpAngle(m_CameraDirV, m_AlignTargetV, alignSpeed);
 
 		// 到着判定
-		if (fabs(m_CameraDirH - m_AlignTargetH) < 0.03f &&
-			fabs(m_CameraDirV - m_AlignTargetV) < 0.03f)
+		if (fabs(m_CameraDirH - m_AlignTargetH) < 0.01f &&
+			fabs(m_CameraDirV - m_AlignTargetV) < 0.01f)
 		{
 			m_IsAligningBehind = false;
 			m_CameraDirH = m_AlignTargetH;
@@ -137,6 +135,11 @@ void Camera::SetTarget(DirectX::SimpleMath::Vector3 target)
 {
 	m_Target = target;
 }
+void Camera::SetTargetYaw(float yaw)
+{
+	m_TargetYaw = yaw;
+}
+
 
 DirectX::SimpleMath::Vector3 Camera::GetTarget()
 {
@@ -148,10 +151,6 @@ DirectX::SimpleMath::Vector3 Camera::GetPosition()
 	return m_Position;
 }
 
-void Camera::SetTargetYaw(float yaw)
-{
-	m_TargetYaw = yaw;
-}
 
 
 //=======================================
@@ -161,7 +160,8 @@ void Camera::ResetBehindTarget()
 {
 	m_IsAligningBehind	= true;  // カメラリセット中フラグON
 
-	m_AlignTargetH = m_TargetYaw + TWO_PI * 0.5f;
+	m_AlignTargetH = m_TargetYaw + PI ;
+	//m_AlignTargetH = m_TargetYaw ;
 	//m_AlignTargetV = m_CameraDirV;
 	m_AlignTargetV = 0.0f;
 }

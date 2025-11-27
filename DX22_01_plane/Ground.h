@@ -36,5 +36,7 @@ public:
 	void Update();
 	void Draw(Camera* cam);
 	void Uninit();
+	
+	std::vector<VERTEX_3D> GetVertices();
 };
 

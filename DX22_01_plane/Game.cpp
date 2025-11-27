@@ -5,6 +5,7 @@
 // コンストラクタ
 Game::Game()
 {
+
 }
 
 // デストラクタ
@@ -18,24 +19,22 @@ void Game::Init()
 {
 	// 描画初期化処理
 	Renderer::Init();
-
 	Input::Create();
 
 	// カメラ初期化
 	m_Camera.Init();
-
 	//オブジェクトを追加
-	m_ObjectList.emplace_back(new GolfBall);
-	auto* ball = static_cast<GolfBall*>(m_ObjectList.back().get()); //ほかのほうがいいかな？
-	ball->SetCamera(&m_Camera);
-
+	m_ObjectList.emplace_back(new GolfBall(&m_Camera));
+	//auto* ball = static_cast<GolfBall*>(m_ObjectList.back().get()); //ほかのやりかたほうがいいかな？
+	//ball->SetCamera(&m_Camera);
 	m_ObjectList.emplace_back(new Ground);
 
 	//オブジェクト初期化
 	for (auto& o: m_ObjectList) {
 		o->Init();
 	}
-
+	//ゴルフボールにGroundのポインタをセット
+	dynamic_cast<GolfBall*>(m_ObjectList[0].get())->SetGround(dynamic_cast<Ground*>(m_ObjectList[1].get()));
 
 }
 

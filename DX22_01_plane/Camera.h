@@ -42,15 +42,17 @@ private:
 public:
 	void Init();
 	void Update();
-	void SetCamera();
 	void Uninit();
 
+	void SetCamera();
 
 	///////////////////
 
-	void SetTarget(DirectX::SimpleMath::Vector3 target);
 	DirectX::SimpleMath::Vector3 GetTarget();
+	void SetTarget(DirectX::SimpleMath::Vector3 target);
+
 	DirectX::SimpleMath::Vector3 GetPosition();
+
 	void SetTargetYaw(float yaw);
 
 	void ResetBehindTarget();

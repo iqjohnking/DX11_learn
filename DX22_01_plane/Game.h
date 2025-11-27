@@ -12,7 +12,7 @@ private:
 	Camera  m_Camera;
 
 	// テストオブジェクト
-	GolfBall m_Ball;
+	//GolfBall m_Ball;
 
 	//Objects
 	std::vector<std::unique_ptr<Object>> m_ObjectList;
