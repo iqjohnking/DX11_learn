@@ -18,12 +18,13 @@ private:
 	static constexpr float	TWO_PI = 6.283185307f;
 	static constexpr float		PI = 3.1415926535;
 
-	const float gravity = 1.0f;
-
-	const float accelPerFrame = 0.35f;  
-	const float maxSpeed = 1.80f;		
-	const float dragFactor = 0.85f;		
-	const float stopEpsilon = 0.001f;	
+	// 物理パラメータ
+	//const float gravity = 1.0f;
+	//const float accelPerFrame = 0.35f;  
+	//const float maxSpeed = 1.80f;		
+	//const float dragFactor = 0.85f;		
+	//const float stopEpsilon = 0.001f;	
+	
 	//キャラクターの向き
 	//DirectX::SimpleMath::Vector3 playerDir = DirectX::SimpleMath::Vector3(0.0f, 0.0f, 1.0f);
 

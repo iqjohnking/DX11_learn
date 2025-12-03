@@ -9,8 +9,9 @@ using namespace DirectX::SimpleMath;
 void Ground::Init()
 {
 	// 頂点データ
-	m_SizeX = 100;
-	m_SizeZ = 100;
+	m_SizeX = 50;
+	m_SizeZ = 50;
+	float m_SizeY =  100.0f / 255.0f;
 	m_Vertices.resize(6 * m_SizeX * m_SizeZ);
 	for (int z = 0; z < m_SizeZ; z++) {
 		for (int x = 0; x < m_SizeX; x++) {
@@ -69,7 +70,7 @@ void Ground::Init()
 				int picZ = (int)(1 + z * (float)(height - 2) / m_SizeZ);
 
 				unsigned char pixelValue = imageData[picZ * width + picX]; //これが 2D座標 (picX, picZ) を 1D配列 index に変換した値 です
-				float heightValue = (float)pixelValue / 255.0f * 50.0f; //高さ(Y)を0～20に変換//他の変換も試してみよう
+				float heightValue = (float)pixelValue * m_SizeY; //高さ(Y)を0～20に変換//他の変換も試してみよう
 				//float heightValue = (float)pixelValue / 15.0f; //高さ(Y)を0～20に変換//他の変換も試してみよう
 
 				//頂点の高さを設定する
@@ -154,7 +155,7 @@ void Ground::Init()
 	material.TextureEnable = true;				//テクスチャを使うか否かのフラグ
 	m_Material->Create(material);				// マテリアル情報をセット
 
-	m_Position.y = -50;
+	m_Position.y = -100;
 	m_Scale.x = 10.0f;
 	m_Scale.z = 10.0f;
 }

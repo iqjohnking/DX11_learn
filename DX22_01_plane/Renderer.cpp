@@ -199,10 +199,11 @@ HRESULT Renderer::Init()
 	//Lightの初期化
 	LIGHT light{}; //LIGHT 型の変数を生成し、すべてのメンバーを 0 または既定値で初期化する。
 	light.Enable = true;
-	light.Direction = Vector4(0.0f, -1.0f, 0.8f, 0.0f);//方向
+	light.Direction = Vector4(0.0f, -1.0f, 0.9f, 0.0f);//方向
 	light.Direction.Normalize();
-	light.Diffuse = Color(1.5f, 1.5, 1.5f, 1.0f);//平行光源の強さといろ
-	light.Ambient = Color(0.2f, 0.2f, 0.2f, 1.0f);//環境光の強さといろ
+	light.Diffuse = Color(1.5f, 1.5f, 1.5f, 1.0f);//平行光源の強さといろ
+	//light.Ambient = Color(0.2f, 0.2f, 0.2f, 1.0f);//環境光の強さといろ
+	light.Ambient = Color(0.5f, 0.5f, 0.5f, 1.0f);//環境光の強さといろ
 	SetLight(light);
 
 	//４番目の定数バッファにマテリアル情報
