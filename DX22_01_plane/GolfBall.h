@@ -6,7 +6,7 @@
 #include "Texture.h"
 #include "Material.h"
 #include "utility.h" //文字列変換用
-#include "Ground.h" 
+//#include "Ground.h" 
 class GolfBall :public Object
 {
 private:
@@ -38,7 +38,7 @@ private:
 
 	// 追加：カメラ参照を保持
 	Camera* m_Cam = nullptr;
-	Ground* m_Ground = nullptr;
+	//Ground* m_Ground = nullptr;
 
 public:
 
@@ -50,7 +50,7 @@ public:
 	void Draw(Camera* cam);
 	void Uninit();
 
-	void SetGround(Ground* ground);
+	//void SetGround(Ground* ground);
 
 
 	/////////////////////////////////////////

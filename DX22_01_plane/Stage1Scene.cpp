@@ -20,11 +20,10 @@ Stage1Scene::~Stage1Scene()
 void Stage1Scene::Init()
 {
 	// オブジェクトを作成
-	m_MySceneObjects.emplace_back(Game::GetInstance()->AddObject<GolfBall>());
+	Camera* cam = Game::GetInstance()->GetCamera();
+
+	m_MySceneObjects.emplace_back(Game::GetInstance()->AddObject<GolfBall>(cam));
 	m_MySceneObjects.emplace_back(Game::GetInstance()->AddObject<Ground>());
-
-
-
 
 }
 

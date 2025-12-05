@@ -25,6 +25,7 @@ ID3D11Buffer* Renderer::m_pProjectionBuffer{}; // プロジェクション行列
 
 ID3D11Buffer* Renderer::m_pLightBuffer{}; // ライト設定（平行光源
 ID3D11Buffer* Renderer::m_pMaterialBuffer{}; // マテリアル設定
+ID3D11Buffer* Renderer::m_pTextureBuffer{}; // UV情報
 
 // デプスステンシルステート
 ID3D11DepthStencilState* Renderer::m_pDepthStateEnable{};
@@ -219,6 +220,15 @@ HRESULT Renderer::Init()
 	material.Diffuse = Color(1.0f, 1.0f, 1.0f, 1.0f); //拡散反射
 	SetMaterial(material);
 
+	//５番目の定数バッファにUV情報
+	bufferDesc.ByteWidth = sizeof(Matrix);
+	hr = m_pDevice->CreateBuffer(&bufferDesc, NULL, &m_pTextureBuffer);
+	m_pDeviceContext->VSSetConstantBuffers(5, 1, &m_pTextureBuffer);
+	//m_pDeviceContext->PSSetConstantBuffers(5, 1, &m_pTextureBuffer);
+	if (FAILED(hr)) return hr;
+	// Uv初期化
+	SetUV(0.0f, 0.0f, 1.0f, 1.0f);
+
 	return S_OK;
 }
 
@@ -274,6 +284,7 @@ void Renderer::Uninit()
 
 	SAFE_RELEASE(m_pLightBuffer);
 	SAFE_RELEASE(m_pMaterialBuffer);
+	SAFE_RELEASE(m_pTextureBuffer);
 
 	SAFE_RELEASE(m_pWorldBuffer);
 	SAFE_RELEASE(m_pViewBuffer);
@@ -328,6 +339,16 @@ void Renderer::SetMaterial(MATERIAL Material)
 {
 	// MATERIALの設定をGPU側へ送る
 	m_pDeviceContext->UpdateSubresource(m_pMaterialBuffer, 0, NULL, &Material, 0, 0);
+}
+//--------------------------------------------------------------------------------------
+// UV情報を設定
+//--------------------------------------------------------------------------------------
+void Renderer::SetUV(float u, float v, float uw, float vh)
+{
+	// UV情報をMatrix型でまとめる/Uv行列を作成
+	Matrix mat = Matrix::CreateScale(uw,vh,1.0f);
+	mat *= Matrix::CreateTranslation(u, v, 0.0f).Transpose();
+	m_pDeviceContext->UpdateSubresource(m_pTextureBuffer, 0, NULL, &mat, 0, 0);
 }
 
 //--------------------------------------------------------------------------------------

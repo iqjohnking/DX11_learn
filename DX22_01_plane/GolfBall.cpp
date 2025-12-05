@@ -1,7 +1,10 @@
 #include "GolfBall.h"
 #include "Input.h"
 #include "Collision.h"
+#include "Game.h"
+#include "Ground.h"
 
+using namespace std;
 using namespace DirectX::SimpleMath;
 
 GolfBall::GolfBall(Camera* cam)
@@ -23,15 +26,15 @@ void GolfBall::Init()
 	StaticMesh staticmesh;
 
 	//3Dモデルデータ
-	//std::u8string modelFile = u8"assets/model/cylinder/cylinder.obj";
-	std::u8string modelFile = u8"assets/model/golfball/golf_ball.obj";
+	//u8string modelFile = u8"assets/model/cylinder/cylinder.obj";
+	u8string modelFile = u8"assets/model/golfball/golf_ball.obj";
 
 	//テクスチャディレクトリ
-	//std::string texDirectory = "assets/model/cylinder";
-	std::string texDirectory = "assets/model/golfball";
+	//string texDirectory = "assets/model/cylinder";
+	string texDirectory = "assets/model/golfball";
 
 	//Meshを読み込む
-	std::string tmpStr1(reinterpret_cast<const char*>(modelFile.c_str()), modelFile.size());
+	string tmpStr1(reinterpret_cast<const char*>(modelFile.c_str()), modelFile.size());
 	staticmesh.Load(tmpStr1, texDirectory);
 
 	m_MeshRenderer.Init(staticmesh);
@@ -46,19 +49,19 @@ void GolfBall::Init()
 	m_Textures = staticmesh.GetTextures();
 
 	// マテリアル情報取得	
-	std::vector<MATERIAL> materials = staticmesh.GetMaterials();
+	vector<MATERIAL> materials = staticmesh.GetMaterials();
 
 	// マテリアル数分ループ
 	for (int i = 0; i < materials.size(); i++)
 	{
 		// マテリアルオブジェクト生成
-		std::unique_ptr<Material> m = std::make_unique<Material>();
+		unique_ptr<Material> m = make_unique<Material>();
 
 		// マテリアル情報をセット
 		m->Create(materials[i]);
 
 		// マテリアルオブジェクトを配列に追加
-		m_Materials.push_back(std::move(m));
+		m_Materials.push_back(move(m));
 	}
 
 	//モデルによってスケールを調整
@@ -111,7 +114,7 @@ void GolfBall::Update()
 		if (Input::GetKeyPress(VK_W)) dir += camFwd;   // 前
 		if (Input::GetKeyPress(VK_S)) dir -= camFwd;   // 後
 	}
-	
+
 
 	// ====== 2) 速度更新（入力による加速） ======
 
@@ -125,7 +128,7 @@ void GolfBall::Update()
 		float spd2 = velXZ.LengthSquared();
 		if (spd2 > maxSpeed * maxSpeed)
 		{
-			float spd = std::sqrt(spd2);
+			float spd = sqrt(spd2);
 			velXZ /= spd;
 			velXZ *= maxSpeed;
 			m_Velocity.x = velXZ.x;
@@ -133,7 +136,7 @@ void GolfBall::Update()
 		}
 	}
 	// 3) velocity更新/正規化/速度制限/減速
-	else{
+	else {
 		float spd2 = m_Velocity.LengthSquared();
 
 		if (spd2 < stopEpsilon)
@@ -158,10 +161,18 @@ void GolfBall::Update()
 	m_Position += m_Velocity;
 
 	//float radius = 2.0f * m_Scale.x; // 球の半径
-	float radius =  m_Scale.x; // 球の半径
+	float radius = m_Scale.x; // 球の半径
 
 	// Groundのverticesデータを取得
-	std::vector<VERTEX_3D> vertices = m_Ground->GetVertices();
+	//vector<VERTEX_3D> vertices = m_Ground->GetVertices();
+	vector<Ground*> grounds = Game::GetInstance()->GetObjects<Ground>();
+	vector<VERTEX_3D> vertices;
+	for (auto g : grounds) {
+		vector<VERTEX_3D> vecs = g->GetVertices();
+		for (auto v : vecs) {
+			vertices.emplace_back(v);
+		}
+	}
 
 	float moveDistance = 9999.0f;
 	Vector3 contactPoint;
@@ -264,7 +275,7 @@ void GolfBall::Update()
 
 		if (shouldTurn)
 		{
-			float targetYaw = std::atan2(m_Velocity.x, m_Velocity.z);
+			float targetYaw = atan2(m_Velocity.x, m_Velocity.z);
 			float currentYaw = m_Rotation.y;
 
 			float delta = targetYaw - currentYaw;
@@ -279,6 +290,7 @@ void GolfBall::Update()
 
 			if (currentYaw > PI)  currentYaw -= TWO_PI;
 			if (currentYaw < -PI)  currentYaw += TWO_PI;
+
 
 			m_Rotation.y = currentYaw;
 		}
@@ -340,10 +352,12 @@ void GolfBall::Uninit()
 
 }
 
-void GolfBall::SetGround(Ground* ground)
-{
-	m_Ground = ground;
-}
+// セットの必要はもういない
+// GameクラスのインスタンスからGround情報を取得するようにしたため
+//void GolfBall::SetGround(Ground* ground)
+//{
+//	m_Ground = ground;
+//}
 
 float GolfBall::GetYaw()
 {

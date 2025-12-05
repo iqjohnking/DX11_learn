@@ -90,6 +90,7 @@ private:
 
 	static ID3D11Buffer*			m_pLightBuffer;		//
 	static ID3D11Buffer*			m_pMaterialBuffer;	//マテリアルバファー
+	static ID3D11Buffer*			m_pTextureBuffer;	//UV情報
 
 	static ID3D11DepthStencilState* m_pDepthStateEnable;
 	static ID3D11DepthStencilState* m_pDepthStateDisable;
@@ -133,6 +134,7 @@ public:
 	
 	static void SetLight(LIGHT Light);
 	static void SetMaterial(MATERIAL Material);
+	static void SetUV(float u, float v, float uw, float vh);
 
 	//=============================================================================
 	// ブレンド ステート設定

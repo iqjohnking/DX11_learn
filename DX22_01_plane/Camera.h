@@ -44,7 +44,7 @@ public:
 	void Update();
 	void Uninit();
 
-	void SetCamera();
+	void SetCamera(int mode = 0);
 
 	///////////////////
 

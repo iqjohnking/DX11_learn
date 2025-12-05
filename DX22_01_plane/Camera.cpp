@@ -12,7 +12,7 @@ void Camera::Init()
 {
 	m_Position = Vector3(0.0f, 20.0f, -50.0f);	// カメラの初期位置（X=0, Y=20, Z=-50）
 	m_Target = Vector3(0.0f, 0.0f, 0.0f);		// 狙う位置（カメラが見ている位置
-	m_CameraDirH = PI ;							// カメラの水平回転角度（約180度の向き）
+	m_CameraDirH = PI;							// カメラの水平回転角度（約180度の向き）
 	m_CameraDirV = 0.0f;						// カメラの
 }
 
@@ -100,26 +100,54 @@ void Camera::Update()
 //=======================================
 //描画処理
 //=======================================
-void Camera::SetCamera()
+void Camera::SetCamera(int mode)
 {
-	// ビュー変換後列作成
-	Vector3 up = Vector3(0.0f, 1.0f, 0.0f);
-	m_ViewMatrix = DirectX::XMMatrixLookAtLH(m_Position, m_Target, up); //左手系//この関数は自動的にカメラをm_Target向けに
+	//3D
+	if (mode == 0)
+	{
+		// ビュー変換後列作成
+		Vector3 up = Vector3(0.0f, 1.0f, 0.0f);
+		m_ViewMatrix = DirectX::XMMatrixLookAtLH(m_Position, m_Target, up); //左手系//この関数は自動的にカメラをm_Target向けに
 
-	Renderer::SetViewMatrix(&m_ViewMatrix);
+		Renderer::SetViewMatrix(&m_ViewMatrix);
 
-	//プロジェクション行列の生成
-	constexpr float fieldOfView = DirectX::XMConvertToRadians(45.0f);    // 視野角 // ConvertToRadians() は角度をラジアンに変換する関数です。
+		//プロジェクション行列の生成
+		constexpr float fieldOfView = DirectX::XMConvertToRadians(45.0f);    // 視野角 // ConvertToRadians() は角度をラジアンに変換する関数です。
 
-	float aspectRatio = static_cast<float>(Application::GetWidth()) / static_cast<float>(Application::GetHeight());	// アスペクト比	
-	float nearPlane = 1.0f;			 // ニアクリップ
-	float farPlane = 1000.0f;		 // ファークリップ
+		float aspectRatio = static_cast<float>(Application::GetWidth()) / static_cast<float>(Application::GetHeight());	// アスペクト比	
+		float nearPlane = 1.0f;			 // ニアクリップ
+		float farPlane = 1000.0f;		 // ファークリップ
 
-	//プロジェクション行列の生成
-	Matrix projectionMatrix;
-	projectionMatrix = DirectX::XMMatrixPerspectiveFovLH(fieldOfView, aspectRatio, nearPlane, farPlane);	//左手系
+		Matrix projectionMatrix;
+		projectionMatrix = DirectX::XMMatrixPerspectiveFovLH(fieldOfView, aspectRatio, nearPlane, farPlane);	//左手系
 
-	Renderer::SetProjectionMatrix(&projectionMatrix);
+		Renderer::SetProjectionMatrix(&projectionMatrix);
+	}
+	else if (mode == 1)//2D
+	{
+		// ビュー変換後列作成
+		Vector3 pos  = Vector3(0.0f, 0.0f, -10.0f);
+		Vector3 tgt  = Vector3(0.0f, 0.0f, 1.0f);
+		Vector3 up   = Vector3(0.0f, 1.0f, 0.0f);
+		m_ViewMatrix = DirectX::XMMatrixLookAtLH(pos, tgt, up); 
+
+		Renderer::SetViewMatrix(&m_ViewMatrix);
+
+		//プロジェクション行列の生成
+		float nearPlane = 1.0f;			 // ニアクリップ
+		float farPlane  = 1000.0f;		 // ファークリップ
+
+		Matrix projectionMatrix;
+		
+		projectionMatrix =	DirectX::XMMatrixOrthographicLH(
+							static_cast<float>(Application::GetWidth()),
+							static_cast<float>(Application::GetHeight()),
+							nearPlane, farPlane);	//左手系			// 2D 用の正射影行列を作成する
+		
+		projectionMatrix = DirectX::XMMatrixTranspose(projectionMatrix);// シェーダーが正しく解釈できるように行列を転置する
+		Renderer::SetProjectionMatrix(&projectionMatrix);
+	}
+
 }
 
 
@@ -158,9 +186,9 @@ DirectX::SimpleMath::Vector3 Camera::GetPosition()
 //=======================================
 void Camera::ResetBehindTarget()
 {
-	m_IsAligningBehind	= true;  // カメラリセット中フラグON
+	m_IsAligningBehind = true;  // カメラリセット中フラグON
 
-	m_AlignTargetH = m_TargetYaw + PI ;
+	m_AlignTargetH = m_TargetYaw + PI;
 	//m_AlignTargetH = m_TargetYaw ;
 	//m_AlignTargetV = m_CameraDirV;
 	m_AlignTargetV = 0.0f;
