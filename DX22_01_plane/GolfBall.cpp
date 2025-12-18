@@ -3,6 +3,7 @@
 #include "Collision.h"
 #include "Game.h"
 #include "Ground.h"
+#include "Pole.h"
 
 using namespace std;
 using namespace DirectX::SimpleMath;
@@ -65,9 +66,9 @@ void GolfBall::Init()
 	}
 
 	//モデルによってスケールを調整
-	m_Scale.x = 5;
-	m_Scale.y = 5;
-	m_Scale.z = 5;
+	m_Scale.x = 1;
+	m_Scale.y = 1;
+	m_Scale.z = 1;
 
 	//初速度
 	m_Velocity.x = 0.00f;
@@ -81,12 +82,12 @@ void GolfBall::Update()
 {
 	Vector3 oldPos = m_Position;
 	// 物理パラメータ
-	const float dt = 1.0f / 60.0f;		// Δt（1フレームあたりの時間）
-	const float accelPerFrame = 0.35f;  // 毎frameの加速度
-	const float maxSpeed = 1.80f;		// 最大速度
-	const float decelPower = 0.05f;		// 減速度
-	const float stopEpsilon = 0.001f;	// 
-	const float gravityAccel = 9.8f;          // 重力加速度
+	const float dt              = 1.0f / 60.0f;	// Δt（1フレームあたりの時間）
+	const float accelPerFrame   = 0.35f;		// 毎frameの加速度
+	const float maxSpeed        = 1.80f;		// 最大速度
+	const float decelPower      = 0.05f;		// 減速度
+	const float stopEpsilon     = 0.03f;		// 
+	const float gravityAccel    = 9.8f;         // 重力加速度
 	const float gravityPerFrame = gravityAccel * dt;
 
 
@@ -141,17 +142,25 @@ void GolfBall::Update()
 
 		if (spd2 < stopEpsilon)
 		{
+			m_stopCount++;
 			// ほぼ止まっているなら完全にゼロにする
-			m_Velocity = Vector3::Zero;
+			//m_Velocity = Vector3::Zero;
 		}
 		else
 		{
-			Vector3 decel = -m_Velocity; // 速度の逆方向
-			decel.Normalize();           // 方向だけ取り出す
-			decel *= decelPower;         // 減速度（1フレームぶん）
+			m_stopCount = 0;
 
-			m_Velocity += decel;         // 逆向き加速度を足して減速
+			Vector3 deceleration = -m_Velocity;			// 速度の逆方向
+			deceleration.Normalize();					// 方向だけ取り出す/ベクトル正規化
+			m_Acceleration = deceleration * decelPower ;// 減速度（1フレームぶん）
+			m_Velocity += m_Acceleration;				// 逆向き加速度を足して減速
 		}
+	}
+
+	if (m_stopCount >= 10)
+	{
+		m_Velocity = Vector3::Zero;
+		m_state = 1; //0:移動状態1:停止状態
 	}
 
 	// ====== 4) 重力 ======
@@ -186,33 +195,38 @@ void GolfBall::Update()
 			vertices[i + 2].position
 		};
 		Vector3 cp;
-		Collision::Segment collisionSegment = { oldPos, m_Position };
-		Collision::Sphere collisionSphere = { m_Position,radius };
+		Collision::Segment collisionSegment = { oldPos, m_Position };	// 移動前→移動後
+		Collision::Sphere	collisionSphere = { m_Position, radius };	// 移動後の位置
 
-		bool isSegmentHit = Collision::CheckHit(collisionSegment, collisionPolygon, cp);
-		bool isHit = Collision::CheckHit(collisionSphere, collisionPolygon, cp);
+		bool isSegmentHit = Collision::CheckHit(collisionSegment, collisionPolygon, cp); // 移動経路との当たり判定
+		bool isHit        = Collision::CheckHit(collisionSphere	, collisionPolygon, cp); // 移動後の位置との当たり判定
 
-		if (isSegmentHit) {
-			float md = 0;
-			Vector3 np = Collision::moveSphere(collisionSegment, radius, collisionPolygon, cp, md);
+
+		if (isSegmentHit) { 
+			// 移動経路と当たっている場合はこちらを優先
+			// 壁を越えてしまう前に衝突直後の位置を計算、その位置へ移動する
+			float md = 0; // 移動距離
+			Vector3 np = Collision::moveSphere(collisionSegment, radius, collisionPolygon, cp, md); 
 			if (moveDistance > md)
 			{
-				moveDistance = md;
-				m_Position = np;
-				contactPoint = cp;
-				normal = Collision::GetNormal(collisionPolygon);
+				moveDistance = md; // 最小移動距離を更新
+				m_Position   = np; // 衝突直後の位置に移動
+				contactPoint = cp; // 接触点
+				normal       = Collision::GetNormal(collisionPolygon);
 			}
 		}
 		else if (isHit)
 		{
+			// 移動後の位置と当たっている場合
+			// 衝突直後の位置を計算(もし壁を超えるならこの場所に戻る)
 			Vector3 np = Collision::moveSphere(collisionSphere, collisionPolygon, cp);
 			float md = (np - oldPos).Length();
 			if (moveDistance > md)
 			{
 				moveDistance = md;
-				m_Position = np;
+				m_Position   = np;
 				contactPoint = cp;
-				normal = Collision::GetNormal(collisionPolygon);
+				normal       = Collision::GetNormal(collisionPolygon);
 			}
 		}
 	}
@@ -221,13 +235,13 @@ void GolfBall::Update()
 		//MessageBoxA(NULL, "当たった", "当たり判定確認", MB_OK);
 		// ballの速度ベクトル法線方向成分と接線方向成分に分解
 		float velocityNormal = Collision::Dot(m_Velocity, normal);
-		Vector3 v1 = velocityNormal * normal; // 法線方向成分
-		Vector3 v2 = m_Velocity - v1;          // 接線方向成分
+		Vector3 v1 = velocityNormal * normal;	// 法線方向成分
+		Vector3 v2 = m_Velocity - v1;			// 接線方向成分
 		// 反射ベクトルを計算
-		const float restitution = 0.8f; // 反発係数
-		const float friction = 0.9f;    // 摩擦係数
+		const float restitution   = 0.8f; // 反発係数
+		const float friction      = 0.9f; // 摩擦係数
 		Vector3 reflectedVelocity = v2 * friction - v1 * restitution;
-		m_Velocity = reflectedVelocity;
+		m_Velocity                = reflectedVelocity;
 	}
 
 	////////////////////////////////////////////////////////////
@@ -299,6 +313,12 @@ void GolfBall::Update()
 	if (m_Cam) {
 		m_Cam->SetTarget(m_Position);    // 目標の座標をセットする
 		m_Cam->SetTargetYaw(GetYaw());   // 目標の向きをセットする
+	}
+
+	//リスポーン
+	if(m_Position.y < -100.0f){
+		m_Position = Vector3(0.0f, 50.0f, 0.0f);
+		m_Velocity = Vector3::Zero;
 	}
 }
 

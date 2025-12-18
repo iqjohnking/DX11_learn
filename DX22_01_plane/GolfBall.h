@@ -7,6 +7,7 @@
 #include "Material.h"
 #include "utility.h" //文字列変換用
 //#include "Ground.h" 
+
 class GolfBall :public Object
 {
 private:
@@ -38,7 +39,10 @@ private:
 
 	// 追加：カメラ参照を保持
 	Camera* m_Cam = nullptr;
-	//Ground* m_Ground = nullptr;
+
+	//state
+	int m_state = 0;
+	int m_stopCount = 0;
 
 public:
 
@@ -49,6 +53,13 @@ public:
 	void Update();
 	void Draw(Camera* cam);
 	void Uninit();
+
+	//状態の取得・設定
+	int GetState() { return m_state; }
+	void SetState(int state) { m_state = state; }
+
+	//ショット
+	void Shot(DirectX::SimpleMath::Vector3 dir) {m_Velocity = dir;}
 
 	//void SetGround(Ground* ground);
 

@@ -8,6 +8,7 @@ class Stage1Scene : public Scene
 private:
 	std::vector<Object*> m_MySceneObjects; // このシーンのオブジェクト
 
+	int m_State = 0;
 	void Init(); // 初期化
 	void Uninit(); // 終了処理
 
