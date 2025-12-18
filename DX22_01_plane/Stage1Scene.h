@@ -9,12 +9,18 @@ private:
 	std::vector<Object*> m_MySceneObjects; // このシーンのオブジェクト
 
 	int m_State = 0;
+	int m_Par = 0;
+	int m_StrokeCount = 0;
+
+
 	void Init(); // 初期化
 	void Uninit(); // 終了処理
 
 public:
 	Stage1Scene(); // コンストラクタ
 	~Stage1Scene(); // デストラクタ
+
+	int GetScore() const;
 
 	void Update(); // 更新
 };

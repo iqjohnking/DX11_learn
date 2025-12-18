@@ -107,6 +107,16 @@ Game* Game::GetInstance()
 void Game::ChangeScene(SceneName sceneName)
 {
 	// 読み込み済みシーンの削除
+	int score = 0;
+	if (m_Instance->m_Scene != nullptr) {
+		// ステージ1シーンからリザルトシーンへ移行する場合、スコアを取得しておく
+		if (Stage1Scene* stage1Scene = dynamic_cast<Stage1Scene*>(m_Instance->m_Scene))
+		{
+			score = stage1Scene->GetScore();
+		}
+		delete m_Instance->m_Scene;
+		m_Instance->m_Scene = nullptr;
+	}
 	if (m_Instance->m_Scene != nullptr) {
 		delete m_Instance->m_Scene;
 		m_Instance->m_Scene = nullptr;
@@ -120,6 +130,7 @@ void Game::ChangeScene(SceneName sceneName)
 		break;
 	case RESULT:
 		m_Instance->m_Scene = new ResultScene();
+		dynamic_cast<ResultScene*>(m_Instance->m_Scene)->SetScore(score);
 		break;
 	default:
 		break;
@@ -136,9 +147,9 @@ void Game::DeleteObject(Object* ptr)
 	ptr->Uninit();
 
 	//要素の削除
-	erase_if(m_Instance->m_Objects, 
+	erase_if(m_Instance->m_Objects,
 		[ptr](const std::unique_ptr<Object>& element) {
-		return element.get() == ptr;
+			return element.get() == ptr;
 		});
 	m_Instance->m_Objects.shrink_to_fit();
 }

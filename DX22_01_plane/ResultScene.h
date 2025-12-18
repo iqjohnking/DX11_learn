@@ -16,5 +16,6 @@ public:
 	~ResultScene(); // デストラクタ
 
 	void Update(); // 更新
+	void SetScore(int score); // スコアセット
 };
 

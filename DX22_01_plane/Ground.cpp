@@ -11,7 +11,7 @@ void Ground::Init()
 	// 頂点データ
 	m_SizeX = 50;
 	m_SizeZ = 50;
-	float m_SizeY =  100.0f / 255.0f;
+	float m_SizeY =  10.0f / 255.0f;
 	m_Vertices.resize(6 * m_SizeX * m_SizeZ);
 	for (int z = 0; z < m_SizeZ; z++) {
 		for (int x = 0; x < m_SizeX; x++) {

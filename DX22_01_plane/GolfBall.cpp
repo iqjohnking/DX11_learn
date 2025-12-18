@@ -81,50 +81,83 @@ void GolfBall::Init()
 void GolfBall::Update()
 {
 	Vector3 oldPos = m_Position;
-	// 物理パラメータ
-	const float dt              = 1.0f / 60.0f;	// Δt（1フレームあたりの時間）
-	const float accelPerFrame   = 0.35f;		// 毎frameの加速度
-	const float maxSpeed        = 1.80f;		// 最大速度
-	const float decelPower      = 0.05f;		// 減速度
-	const float stopEpsilon     = 0.03f;		// 
-	const float gravityAccel    = 9.8f;         // 重力加速度
+
+	// ===== 物理パラメータ =====
+	const float dt = 1.0f / 60.0f;      // Δt（1フレームあたりの時間）
+	const float accelPerFrame = 0.35f;  // 毎frameの加速度
+	const float maxSpeed = 1.80f;       // 最大速度
+	const float decelPower = 0.05f;     // 減速度
+	const float stopEpsilon = 0.03f;    // 
+	const float gravityAccel = 9.8f;    // 重力加速度
 	const float gravityPerFrame = gravityAccel * dt;
 
-
-	//ボールを操作する処理
-
-	// ====== 1) 入力方向（カメラ基準） ======
+	// =========================================================
+	// 1) 入力方向（カメラ基準）
+	// =========================================================
 	Vector3 dir(0, 0, 0);
 	if (m_Cam)
 	{
 		Vector3 camFwd = GetPosition() - m_Cam->GetPosition();
-		camFwd.y = 0.0f;								//y軸成分を無視して水平ベクトルにする
-		if (camFwd.LengthSquared() > 0) camFwd.Normalize();
+		camFwd.y = 0.0f;
+		if (camFwd.LengthSquared() > 0.0f) camFwd.Normalize();
 
 		Vector3 up(0.0f, 1.0f, 0.0f);
-		//「上向き × 前向き = 右向き」的外積（クロス積）
 		Vector3 camRight(
 			up.y * camFwd.z - up.z * camFwd.y,
 			up.z * camFwd.x - up.x * camFwd.z,
 			up.x * camFwd.y - up.y * camFwd.x
 		);
-		if (camRight.LengthSquared() > 0.0f) { camRight.Normalize(); }
+		if (camRight.LengthSquared() > 0.0f) camRight.Normalize();
 
-		if (Input::GetKeyPress(VK_A)) dir -= camRight; // 左 = 反向右
-		if (Input::GetKeyPress(VK_D)) dir += camRight; // 右
-		if (Input::GetKeyPress(VK_W)) dir += camFwd;   // 前
-		if (Input::GetKeyPress(VK_S)) dir -= camFwd;   // 後
+		if (Input::GetKeyPress(VK_A)) dir -= camRight;
+		if (Input::GetKeyPress(VK_D)) dir += camRight;
+		if (Input::GetKeyPress(VK_W)) dir += camFwd;
+		if (Input::GetKeyPress(VK_S)) dir -= camFwd;
 	}
 
+	const bool hasInput = (dir.LengthSquared() > 0.0f);
 
-	// ====== 2) 速度更新（入力による加速） ======
+	// =========================================================
+	// 2) 停止状態の扱い（ここが重要）
+	//    - 停止中に入力があれば解除（wake）
+	//    - 停止中で入力なしなら、重力/座標更新/当たり判定をしない（sleep）
+	// =========================================================
+	if (m_state == 1)
+	{
+		if (hasInput)
+		{
+			m_state = 0;
+			m_stopCount = 0;
+		}
+		else
+		{
+			// 完全停止：以降の物理を回さない
+			m_Velocity = Vector3::Zero;
 
-	if (dir.LengthSquared() > 0.0f)
+			// camera追従（元の処理は残す）
+			if (m_Cam) {
+				m_Cam->SetTarget(m_Position);
+				m_Cam->SetTargetYaw(GetYaw());
+			}
+
+			// リスポーン（元の処理は残す）
+			if (m_Position.y < -100.0f) {
+				m_Position = Vector3(0.0f, 50.0f, 0.0f);
+				m_Velocity = Vector3::Zero;
+			}
+			return;
+		}
+	}
+
+	// =========================================================
+	// 3) 速度更新（入力加速 or 減速）
+	// =========================================================
+	if (hasInput)
 	{
 		dir.Normalize();
-		m_Velocity += dir * accelPerFrame; // 1フレームぶんの加速
+		m_Velocity += dir * accelPerFrame;
 
-		// 水平速度の上限
+		// 水平速度の上限（元コードそのまま）
 		Vector3 velXZ(m_Velocity.x, 0.0f, m_Velocity.z);
 		float spd2 = velXZ.LengthSquared();
 		if (spd2 > maxSpeed * maxSpeed)
@@ -136,152 +169,150 @@ void GolfBall::Update()
 			m_Velocity.z = velXZ.z;
 		}
 	}
-	// 3) velocity更新/正規化/速度制限/減速
-	else {
+	else
+	{
 		float spd2 = m_Velocity.LengthSquared();
 
 		if (spd2 < stopEpsilon)
 		{
 			m_stopCount++;
-			// ほぼ止まっているなら完全にゼロにする
-			//m_Velocity = Vector3::Zero;
 		}
 		else
 		{
 			m_stopCount = 0;
 
-			Vector3 deceleration = -m_Velocity;			// 速度の逆方向
-			deceleration.Normalize();					// 方向だけ取り出す/ベクトル正規化
-			m_Acceleration = deceleration * decelPower ;// 減速度（1フレームぶん）
-			m_Velocity += m_Acceleration;				// 逆向き加速度を足して減速
+			Vector3 deceleration = -m_Velocity;
+			deceleration.Normalize();
+			m_Acceleration = deceleration * decelPower;
+			m_Velocity += m_Acceleration;
 		}
 	}
 
+	// =========================================================
+	// 4) 停止判定（停止に入ったら、以降を回さない）
+	// =========================================================
 	if (m_stopCount >= 10)
 	{
 		m_Velocity = Vector3::Zero;
-		m_state = 1; //0:移動状態1:停止状態
+		m_state = 1;
+
+		// 「停止したフレーム」にも重力・移動をさせないため return
+		// （ここが“斜面でまだ動く”の直接原因を潰す）
+		if (m_Cam) {
+			m_Cam->SetTarget(m_Position);
+			m_Cam->SetTargetYaw(GetYaw());
+		}
+		if (m_Position.y < -100.0f) {
+			m_Position = Vector3(0.0f, 50.0f, 0.0f);
+			m_Velocity = Vector3::Zero;
+		}
+		return;
 	}
 
-	// ====== 4) 重力 ======
+	// =========================================================
+	// 5) 重力 → 座標更新
+	// =========================================================
 	m_Velocity.y -= gravityPerFrame;
-
-	// ====== 5) 座標更新 ======
 	m_Position += m_Velocity;
 
-	//float radius = 2.0f * m_Scale.x; // 球の半径
-	float radius = m_Scale.x; // 球の半径
+	// =========================================================
+	// 6) 当たり判定（元コードの構造を保ったまま整理）
+	// =========================================================
+	float radius = m_Scale.x;
 
-	// Groundのverticesデータを取得
-	//vector<VERTEX_3D> vertices = m_Ground->GetVertices();
-	vector<Ground*> grounds = Game::GetInstance()->GetObjects<Ground>();
-	vector<VERTEX_3D> vertices;
-	for (auto g : grounds) {
-		vector<VERTEX_3D> vecs = g->GetVertices();
-		for (auto v : vecs) {
-			vertices.emplace_back(v);
-		}
+	std::vector<Ground*> grounds = Game::GetInstance()->GetObjects<Ground>();
+	std::vector<VERTEX_3D> vertices;
+	for (auto g : grounds)
+	{
+		std::vector<VERTEX_3D> vecs = g->GetVertices();
+		for (auto v : vecs) vertices.emplace_back(v);
 	}
 
 	float moveDistance = 9999.0f;
 	Vector3 contactPoint;
 	Vector3 normal;
-	// 地面との当たり判定
-	for (int i = 0; i < vertices.size(); i += 3)
+
+	for (int i = 0; i < (int)vertices.size(); i += 3)
 	{
-		Collision::Polygon collisionPolygon = {
+		Collision::Polygon poly = {
 			vertices[i + 0].position,
 			vertices[i + 1].position,
 			vertices[i + 2].position
 		};
+
 		Vector3 cp;
-		Collision::Segment collisionSegment = { oldPos, m_Position };	// 移動前→移動後
-		Collision::Sphere	collisionSphere = { m_Position, radius };	// 移動後の位置
+		Collision::Segment seg = { oldPos, m_Position };
+		Collision::Sphere  sph = { m_Position, radius };
 
-		bool isSegmentHit = Collision::CheckHit(collisionSegment, collisionPolygon, cp); // 移動経路との当たり判定
-		bool isHit        = Collision::CheckHit(collisionSphere	, collisionPolygon, cp); // 移動後の位置との当たり判定
+		bool isSegmentHit = Collision::CheckHit(seg, poly, cp);
+		bool isHit = Collision::CheckHit(sph, poly, cp);
 
-
-		if (isSegmentHit) { 
-			// 移動経路と当たっている場合はこちらを優先
-			// 壁を越えてしまう前に衝突直後の位置を計算、その位置へ移動する
-			float md = 0; // 移動距離
-			Vector3 np = Collision::moveSphere(collisionSegment, radius, collisionPolygon, cp, md); 
+		if (isSegmentHit)
+		{
+			float md = 0;
+			Vector3 np = Collision::moveSphere(seg, radius, poly, cp, md);
 			if (moveDistance > md)
 			{
-				moveDistance = md; // 最小移動距離を更新
-				m_Position   = np; // 衝突直後の位置に移動
-				contactPoint = cp; // 接触点
-				normal       = Collision::GetNormal(collisionPolygon);
+				moveDistance = md;
+				m_Position = np;
+				contactPoint = cp;
+				normal = Collision::GetNormal(poly);
 			}
 		}
 		else if (isHit)
 		{
-			// 移動後の位置と当たっている場合
-			// 衝突直後の位置を計算(もし壁を超えるならこの場所に戻る)
-			Vector3 np = Collision::moveSphere(collisionSphere, collisionPolygon, cp);
+			Vector3 np = Collision::moveSphere(sph, poly, cp);
 			float md = (np - oldPos).Length();
 			if (moveDistance > md)
 			{
 				moveDistance = md;
-				m_Position   = np;
+				m_Position = np;
 				contactPoint = cp;
-				normal       = Collision::GetNormal(collisionPolygon);
+				normal = Collision::GetNormal(poly);
 			}
 		}
 	}
+
+	// 衝突後の速度処理（元コードそのまま）
 	if (moveDistance != 9999.0f)
 	{
-		//MessageBoxA(NULL, "当たった", "当たり判定確認", MB_OK);
-		// ballの速度ベクトル法線方向成分と接線方向成分に分解
 		float velocityNormal = Collision::Dot(m_Velocity, normal);
-		Vector3 v1 = velocityNormal * normal;	// 法線方向成分
-		Vector3 v2 = m_Velocity - v1;			// 接線方向成分
-		// 反射ベクトルを計算
-		const float restitution   = 0.8f; // 反発係数
-		const float friction      = 0.9f; // 摩擦係数
+		Vector3 v1 = velocityNormal * normal;
+		Vector3 v2 = m_Velocity - v1;
+
+		const float restitution = 0.8f;
+		const float friction = 0.9f;
+
 		Vector3 reflectedVelocity = v2 * friction - v1 * restitution;
-		m_Velocity                = reflectedVelocity;
+		m_Velocity = reflectedVelocity;
 	}
 
-	////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////
-	// ---- face to move direction (XZ) ----
-	const float turnSpeedPerFrame = 0.314f;        // 
-	const float moveEpsilon2 = 1e-6f;        // 
-	const float steepDotThreshold = 0.95f;     // 斜面の「急さ」判定用（cosθ）※調整用
+	// =========================================================
+	// 7) face to move direction（元コードそのまま）
+	// =========================================================
+	const float turnSpeedPerFrame = 0.314f;
+	const float moveEpsilon2 = 1e-6f;
+	const float steepDotThreshold = 0.95f;
 
-	// 速度がほぼゼロなら何もしない
 	if (m_Velocity.LengthSquared() > moveEpsilon2)
 	{
-		bool hasInput = (dir.LengthSquared() > 0.0f);
-
 		bool shouldTurn = false;
 
 		if (hasInput)
 		{
-			// 入力があるときは常に向きを合わせる
 			shouldTurn = true;
 		}
 		else
 		{
-			// 入力がないときは「急な斜面で接地しているときだけ」向きを合わせる
-			if (moveDistance != 9999.0f) // 今フレームで地面と当たっている
+			if (moveDistance != 9999.0f)
 			{
 				Vector3 up(0.0f, 1.0f, 0.0f);
 				Vector3 n = normal;
-				n.Normalize(); // 念のため正規化
+				n.Normalize();
 
 				float dotNU = n.x * up.x + n.y * up.y + n.z * up.z;
-				// dotNU = cos(斜面の傾き角度)
-				//   1.0  : 完全に水平
-				//   0.0  : 完全に垂直
-				//   0.8  : 約36.9度以上傾いている
-
 				if (dotNU < steepDotThreshold)
 				{
-					// 一定以上に傾いている斜面 → 急な坂とみなす
 					shouldTurn = true;
 				}
 			}
@@ -294,33 +325,50 @@ void GolfBall::Update()
 
 			float delta = targetYaw - currentYaw;
 
-			while (delta > PI)  delta -= TWO_PI;
+			while (delta > PI)   delta -= TWO_PI;
 			while (delta < -PI)  delta += TWO_PI;
 
-			if (delta > turnSpeedPerFrame)  delta = turnSpeedPerFrame;
-			if (delta < -turnSpeedPerFrame)  delta = -turnSpeedPerFrame;
+			if (delta > turnSpeedPerFrame) delta = turnSpeedPerFrame;
+			if (delta < -turnSpeedPerFrame) delta = -turnSpeedPerFrame;
 
 			currentYaw += delta;
 
-			if (currentYaw > PI)  currentYaw -= TWO_PI;
-			if (currentYaw < -PI)  currentYaw += TWO_PI;
-
+			if (currentYaw > PI) currentYaw -= TWO_PI;
+			if (currentYaw < -PI) currentYaw += TWO_PI;
 
 			m_Rotation.y = currentYaw;
 		}
 	}
-	//camera追従
+
+	// =========================================================
+	// 8) camera追従 / リスポーン
+	// =========================================================
 	if (m_Cam) {
-		m_Cam->SetTarget(m_Position);    // 目標の座標をセットする
-		m_Cam->SetTargetYaw(GetYaw());   // 目標の向きをセットする
+		m_Cam->SetTarget(m_Position);
+		m_Cam->SetTargetYaw(GetYaw());
 	}
 
-	//リスポーン
-	if(m_Position.y < -100.0f){
+	if (m_Position.y < -100.0f) {
 		m_Position = Vector3(0.0f, 50.0f, 0.0f);
 		m_Velocity = Vector3::Zero;
 	}
+	// =========================================================
+	// 9)poleとの当たり判定
+	// =========================================================
+	vector<Pole*> pole = Game::GetInstance()->GetObjects<Pole>();
+	if (pole.size() > 0)
+	{
+		Vector3 polePos = pole[0]->GetPosition();
+		Collision::Sphere golfSphere = { m_Position, radius };
+		Collision::Sphere poleSphere = { polePos, 0.5f };
+
+		if(Collision::CheckHit(golfSphere, poleSphere))
+		{
+			m_state = 2; // hole in one
+		}
+	}
 }
+
 
 //=======================================
 //描画処理
