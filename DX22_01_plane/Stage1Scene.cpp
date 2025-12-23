@@ -143,10 +143,12 @@ void Stage1Scene::Update()
 		break;
 	}
 	// エンターキーを押してリザルトへ
-	if (Input::GetKeyTrigger(VK_RETURN))
+	
+	/*if (Input::GetKeyTrigger(VK_RETURN))
 	{
 		Game::GetInstance()->ChangeScene(RESULT);
-	}
+	}*/
+
 }
 
 // 終了処理
