@@ -56,7 +56,40 @@ void Texture2D::Init()
 //=======================================
 void Texture2D::Update()
 {
+	if (m_AnimEnabled && m_CurrentClipIndex >= 0)
+	{
+		AnimClip& clip = m_AnimClips[m_CurrentClipIndex];
 
+
+		m_AnimTimer += 1;
+
+		if (m_AnimTimer >= clip.holdFrames)
+		{
+			m_AnimTimer = 0;
+			m_AnimFrame++;
+
+			if (m_AnimFrame > clip.endFrame)
+			{
+				m_AnimFrame = clip.startFrame;
+			}
+		}
+
+		// -----------------------------
+		// フレーム番号 → UV 計算
+		// -----------------------------
+		int col = m_AnimFrame % m_AnimCols;
+		int row = m_AnimFrame / m_AnimCols;
+
+		int cellX = col + 1;
+		int cellY = row + 1;
+
+		SetUV(
+			static_cast<float>(cellX),        // m_NumU
+			static_cast<float>(cellY),        // m_NumV
+			static_cast<float>(m_AnimCols),   // m_SplitX
+			static_cast<float>(m_AnimRows)    // m_SplitY
+		);
+	}
 }
 
 //=======================================
@@ -72,9 +105,14 @@ void Texture2D::Draw(Camera* cam)
 	Matrix t = Matrix::CreateTranslation(m_Position.x, m_Position.y, m_Position.z);
 	Matrix s = Matrix::CreateScale(m_Scale.x, m_Scale.y, m_Scale.z);
 
-	Matrix worldmtx;
-	worldmtx = s * r * t;
+	// ピボット(Pivot)対応：モデルローカル座標の前後平行移動を挟む
+	Matrix toPivot = Matrix::CreateTranslation(-m_Pivot.x, -m_Pivot.y, -m_Pivot.z);
+	Matrix fromPivot = Matrix::CreateTranslation(m_Pivot.x, m_Pivot.y, m_Pivot.z);
+	// 新しいワールド行列：ピボットで移動 → スケール → 回転 → 元に戻す → 最後にオブジェクト位置を適用
+	Matrix worldmtx = toPivot * s * r * fromPivot * t;
+	//Matrix worldmtx = toPivot * s * r * t;
 	Renderer::SetWorldMatrix(&worldmtx); // GPUにセット
+
 
 	// 描画の処理
 	ID3D11DeviceContext* devicecontext;
@@ -91,16 +129,55 @@ void Texture2D::Draw(Camera* cam)
 	m_Material->SetGPU();
 
 	// UVの設定を指定
-	float u = m_NumU - 1;
-	float v = m_NumV - 1;
-	float uw = 1 / m_SplitX;
-	float vh = 1 / m_SplitY;
+	float u, v, uw, vh;
+
+	switch (repeatState)
+	{
+	case m_RepeatTexture::m_false:
+		u = m_NumU - 1;
+		v = m_NumV - 1;
+		uw = 1 / m_SplitX;
+		vh = 1 / m_SplitY;
+		break;
+
+	case m_RepeatTexture::m_true:
+		u = 0;
+		v = 0;
+		uw = m_Scale.x / m_Texture.GetWidth();
+		vh = m_Scale.y / m_Texture.GetHeight();
+		break;
+
+	case m_RepeatTexture::xOnly:
+		u = 0;
+		v = 0;
+		uw = m_Scale.x / m_Texture.GetWidth();
+		vh = 1 / m_SplitY;
+		break;
+
+	case m_RepeatTexture::yOnly:
+		u = 0;
+		v = 0;
+		uw = 1 / m_SplitX;
+		vh = m_Scale.y / m_Texture.GetHeight();
+		break;
+	}
+
+	// ----- 追加: 左右反転 -----
+	if (m_FlipX)
+	{
+		// 幅を負にし、開始Uを1セル右へずらす
+		// 分割モード(m_false)ではセル単位の幅(1/m_SplitX)を使用
+		// 反転時の開始Uは「現在セルの右端」になるため +uw 前提で負化
+		u = u + uw;
+		uw = -uw;
+	}
+
 
 	Renderer::SetUV(u, v, uw, vh);
 
 	devicecontext->DrawIndexed(
-		(UINT)m_Indices.size(), // 描画するインデックス数
-		0, // 最初のインデックスバッファの位置
+		(UINT)m_Indices.size(),
+		0,
 		0);
 }
 
@@ -137,10 +214,26 @@ void Texture2D::SetRotation(const float& x, const float& y, const float& z)
 	Vector3 r = { x, y, z };
 	SetRotation(r);
 }
+void Texture2D::SetRotation(const float& z)
+{
+	Vector3 r = { 0.0f, 0.0f, z };
+	SetRotation(r);
+}
 void Texture2D::SetRotation(const Vector3& rot)
 {
 	m_Rotation = rot * 3.14f/180; // deg→radに変換
 }
+
+void Texture2D::SetRotationRad(const float& x, const float& y, const float& z)
+{
+	Vector3 r = { x, y, z };
+	SetRotationRad(r);
+}
+void Texture2D::SetRotationRad(const Vector3& rot)
+{
+	m_Rotation = rot; // 已經是 rad，直接存
+}
+
 
 // 大きさを指定
 void Texture2D::SetScale(const float& x, const float& y, const float& z)
@@ -161,3 +254,75 @@ void Texture2D::SetUV(const float& nu, const float& nv, const float& sx, const f
 	m_SplitX = sx;
 	m_SplitY = sy;
 }
+
+void Texture2D::SetSpriteSheet(int cols, int rows)
+{
+	if (cols <= 0 || rows <= 0)
+		return;
+
+	m_AnimCols = cols;
+	m_AnimRows = rows;
+
+}
+
+void Texture2D::AddAnimClip(const std::string& name, int startFrame, int endFrame, int holdFrames)
+{
+	if (startFrame < 0 || endFrame < startFrame || holdFrames <= 0.0f)
+		return;
+
+	AnimClip clip;
+	clip.name = name;
+	clip.startFrame = startFrame;
+	clip.endFrame = endFrame;
+	clip.holdFrames = holdFrames;
+
+	m_AnimClips.push_back(clip);
+}
+
+void Texture2D::PlayAnim(const std::string& name)
+{
+	if (m_CurrentClipIndex >= 0 &&
+		m_AnimClips[m_CurrentClipIndex].name == name)
+	{
+		return;
+	}
+	for (size_t i = 0; i < m_AnimClips.size(); ++i)
+	{
+		if (m_AnimClips[i].name == name)
+		{
+			m_CurrentClipIndex = static_cast<int>(i);
+
+			const AnimClip& clip = m_AnimClips[m_CurrentClipIndex];
+
+			m_AnimFrame = clip.startFrame;
+			m_AnimTimer = 0.0f;
+			m_AnimEnabled = true;
+
+			return;
+		}
+	}
+}
+
+void Texture2D::StopAnimation()
+{
+	m_AnimEnabled = false;
+	m_CurrentClipIndex = -1;
+	m_AnimFrame = 0;
+	m_AnimTimer = 0.0f;
+}
+
+void Texture2D::PauseAnimation(bool pause)
+{
+	if (pause)
+	{
+		m_AnimEnabled = false;
+	}
+	else
+	{
+		if (m_CurrentClipIndex >= 0)
+		{
+			m_AnimEnabled = true;
+		}
+	}
+}
+
