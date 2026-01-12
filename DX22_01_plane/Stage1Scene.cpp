@@ -2,6 +2,7 @@
 #include "Game.h"
 #include "Input.h"
 #include "GolfBall.h"
+#include "Hammer.h"
 #include "Ground.h"
 #include "Arrow.h"
 #include "Pole.h"
@@ -34,6 +35,7 @@ void Stage1Scene::Init()
 	m_MySceneObjects.emplace_back(Game::GetInstance()->AddObject<Ground>());
 	m_MySceneObjects.emplace_back(Game::GetInstance()->AddObject<Arrow>());
 	m_MySceneObjects.emplace_back(Game::GetInstance()->AddObject<Pole>());
+	m_MySceneObjects.emplace_back(Game::GetInstance()->AddObject<Hammer>());
 
 	Texture2D* pt1 = Game::GetInstance()->AddObject<Texture2D>();
 	pt1->SetTexture("assets/texture/ui_back.png");
@@ -82,15 +84,20 @@ void Stage1Scene::Init()
 	pt6->SetUV(1, 1, 10, 1);
 	m_MySceneObjects.emplace_back(pt6);
 
-
 	GolfBall* ball = dynamic_cast<GolfBall*>(m_MySceneObjects[0]);
 	ball->SetState(0);
+
+	//Ground  is  m_MySceneObjects[0]
 
 	Arrow* arrow = dynamic_cast<Arrow*>(m_MySceneObjects[2]);
 	arrow->SetState(0);
 
 	Pole* pole = dynamic_cast<Pole*>(m_MySceneObjects[3]);
 	pole->SetPosition(0.0f, 0.0f, -50.0f);
+
+	Hammer* hammer = dynamic_cast<Hammer*>(m_MySceneObjects[4]);
+	hammer->SetState(0);
+	hammer->SetPosition(0.0f, -90.0f, 0.0f);
 
 }
 
@@ -100,6 +107,7 @@ void Stage1Scene::Update()
 	GolfBall* ball = dynamic_cast<GolfBall*>(m_MySceneObjects[0]);
 	Arrow* arrow = dynamic_cast<Arrow*>(m_MySceneObjects[2]);
 
+	Hammer* hammer = dynamic_cast<Hammer*>(m_MySceneObjects[4]);
 	//
 	switch (m_State) {
 
