@@ -1,18 +1,22 @@
 #include "common.hlsl"
 
 Texture2D g_Texture : register(t0);
-SamplerState g_SamplerState : register(s0);
+SamplerState g_Sampler : register(s0);
 
-// ピクセルシェーダーのエントリポイント
-float4 main(in PS_IN input) : SV_Target
+// 
+cbuffer MaterialBuffer : register(b0)
 {
-    float4 color;
-	
-    // Sample関数→テクスチャから該当のUV位置のピクセル色を取って来る
-    color = g_Texture.Sample(g_SamplerState, input.tex);
-    color *= input.col;
+    float4 Diffuse;
+};
 
-    //color = input.col;
+cbuffer LightBuffer : register(b1)
+{
+    float4 LightDir;
+    float4 LightColor;
+};
 
-    return color;
+float4 main(PS_IN input) : SV_Target
+{
+    // ?完全不使用 normal / light
+    return g_Texture.Sample(g_Sampler, input.tex);
 }

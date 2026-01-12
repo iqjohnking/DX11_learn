@@ -1,4 +1,4 @@
-#include "Arrow.h"
+#include "Kotatu.h"
 //#include "Collision.h"
 #include "Game.h"
 #include "Golfball.h"
@@ -9,16 +9,16 @@ using namespace DirectX::SimpleMath;
 //=======================================
 // 初期化処理
 //=======================================
-void Arrow::Init()
+void Kotatu::Init()
 {
 	// メッシュ読み込み
 	StaticMesh staticmesh;
 
 	// 3Dモデルデータ
-	std::u8string modelFile = u8"assets/model/arrow/arrow.fbx";
+	std::u8string modelFile = u8"assets/model/kotatu_HEKIU/kotatu.fbx";
 
 	// テクスチャディレクトリ
-	std::string texDirectory = "assets/model/arrow";
+	std::string texDirectory = "assets/model/kotatu_HEKIU";
 
 	// Meshを読み込む
 	std::string tmpStr1(reinterpret_cast<const char*>(modelFile.c_str()), modelFile.size());
@@ -52,53 +52,72 @@ void Arrow::Init()
 	}
 
 	// モデルによってスケールを調整
-	m_Scale.x = 3;
-	m_Scale.y = 3;
-	m_Scale.z = 3;
+	m_Scale.x = 10;
+	m_Scale.y = 10;
+	m_Scale.z = 10;
 
-	m_State = 1;
+	m_Rotation.x = DirectX::XM_PIDIV2;
+
+
+	// --- ここから：回転/スケール後のAABB計算 ---
+	const auto& verts = staticmesh.GetVertices();
+
+	Vector3 minP(FLT_MAX, FLT_MAX, FLT_MAX);
+	Vector3 maxP(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+
+	Matrix r = Matrix::CreateFromYawPitchRoll(m_Rotation.y, m_Rotation.x, m_Rotation.z);
+	Matrix s = Matrix::CreateScale(m_Scale.x, m_Scale.y, m_Scale.z);
+	Matrix rs = s * r; // 位置はまだ入れない（原点基準でAABBが欲しい）
+
+	for (const auto& v : verts)
+	{
+		Vector3 p = Vector3::Transform(v.position, rs);
+
+		minP.x = std::min<float>(minP.x, p.x);
+		minP.y = std::min<float>(minP.y, p.y);
+		minP.z = std::min<float>(minP.z, p.z);
+
+		maxP.x = std::max<float>(maxP.x, p.x);
+		maxP.y = std::max<float>(maxP.y, p.y);
+		maxP.z = std::max<float>(maxP.z, p.z);
+	}
+
+	Vector3 size = maxP - minP;
+
+	{
+		std::ostringstream oss;
+		oss << "[Kotatu] AABB(min)=" << minP.x << "," << minP.y << "," << minP.z
+			<< " AABB(max)=" << maxP.x << "," << maxP.y << "," << maxP.z
+			<< " size=" << size.x << "," << size.y << "," << size.z << "\n";
+		OutputDebugStringA(oss.str().c_str());
+	}
+
+	m_Position.y = -maxP.y;
 }
 
 //=======================================
 // 更新処理
 //=======================================
-void Arrow::Update()
+void Kotatu::Update()
 {
-	if (m_State == 0)return; // 非表示ならreturn
 
-	// ゴルフボールの位置を取得
-	vector<GolfBall*> ballpt = Game::GetInstance()->GetObjects<GolfBall>();
-	if (ballpt.size() > 0)
-	{
-		// 矢印の位置を更新
-		m_Position = ballpt[0]->GetPosition();
-	}
+	//// ゴルフボールの位置を取得
+	//vector<GolfBall*> ballpt = Game::GetInstance()->GetObjects<GolfBall>();
+	//if (ballpt.size() > 0)
+	//{
+	//	// 矢印の位置を更新
+	//	m_Position = ballpt[0]->GetPosition();
+	//}
 
-	// 方向選択なら
-	if (m_State == 1)
-	{
-		m_Scale.z = 3; // 長さを固定
 
-		// 向きを回転させる
-		m_Rotation.y += 0.03f;
-
-		if (m_Rotation.y > 6.28)m_Rotation.y = 0;
-	}
-	// パワー選択なら
-	else if (m_State == 2)
-	{
-		// 大きさを変更させる
-		m_Scale.z += 0.04f;
-		if (m_Scale.z > 4)m_Scale.z = 1;
-	}
 }
 
 //=======================================
 // 描画処理
 //=======================================
-void Arrow::Draw(Camera* cam)
+void Kotatu::Draw(Camera* cam)
 {
-	if (m_State == 0)return; // 非表示ならreturn
+	//if (m_State == 0)return; // 非表示ならreturn
 
 	//カメラを選択する
 	cam->SetCamera();
@@ -138,30 +157,15 @@ void Arrow::Draw(Camera* cam)
 //=======================================
 // 終了処理
 //=======================================
-void Arrow::Uninit()
+void Kotatu::Uninit()
 {
 
 }
 
 
 //状態の設定
-void Arrow::SetState(int s)
+void Kotatu::SetState(int s)
 {
-	m_State = s;
+	//m_State = s;
 }
 
-// 矢印のベクトルを取得
-Vector3 Arrow::GetVector()
-{
-	//矢印の初期状態の向き
-	Vector3 res = { 0, 0, -1 };
-
-	// ベクトルを回転
-	Matrix r = Matrix::CreateFromYawPitchRoll(m_Rotation.y, m_Rotation.x, m_Rotation.z);
-	res = Vector3::Transform(res, r);
-
-	//矢印の長さ(パワー)を掛ける
-	res *= m_Scale.z;
-
-	return res;
-}

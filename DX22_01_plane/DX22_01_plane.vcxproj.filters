@@ -55,18 +55,12 @@
     <Filter Include="ソース ファイル\camera">
       <UniqueIdentifier>{acc43195-4f06-4cf9-ab16-47f4d6a42925}</UniqueIdentifier>
     </Filter>
+    <Filter Include="test">
+      <UniqueIdentifier>{b0e15476-6d2b-47a7-9753-18efa96d951e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Object.cpp">
-      <Filter>ソース ファイル\obj</Filter>
-    </ClCompile>
-    <ClCompile Include="TestPlane.cpp">
-      <Filter>ソース ファイル\obj</Filter>
-    </ClCompile>
-    <ClCompile Include="TestCube.cpp">
-      <Filter>ソース ファイル\obj</Filter>
-    </ClCompile>
-    <ClCompile Include="TestModel.cpp">
       <Filter>ソース ファイル\obj</Filter>
     </ClCompile>
     <ClCompile Include="GolfBall.cpp">
@@ -144,21 +138,27 @@
     <ClCompile Include="Hammer.cpp">
       <Filter>ソース ファイル\obj</Filter>
     </ClCompile>
+    <ClCompile Include="TestPlane.cpp">
+      <Filter>test</Filter>
+    </ClCompile>
+    <ClCompile Include="TestModel.cpp">
+      <Filter>test</Filter>
+    </ClCompile>
+    <ClCompile Include="TestCube.cpp">
+      <Filter>test</Filter>
+    </ClCompile>
+    <ClCompile Include="Kotatu.cpp">
+      <Filter>ソース ファイル\obj</Filter>
+    </ClCompile>
+    <ClCompile Include="Skybox.cpp">
+      <Filter>ソース ファイル\obj</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Object.h">
       <Filter>ヘッダー ファイル\obj</Filter>
     </ClInclude>
     <ClInclude Include="GolfBall.h">
-      <Filter>ヘッダー ファイル\obj</Filter>
-    </ClInclude>
-    <ClInclude Include="TestCube.h">
-      <Filter>ヘッダー ファイル\obj</Filter>
-    </ClInclude>
-    <ClInclude Include="TestModel.h">
-      <Filter>ヘッダー ファイル\obj</Filter>
-    </ClInclude>
-    <ClInclude Include="TestPlane.h">
       <Filter>ヘッダー ファイル\obj</Filter>
     </ClInclude>
     <ClInclude Include="Material.h">
@@ -246,6 +246,21 @@
       <Filter>ヘッダー ファイル\obj</Filter>
     </ClInclude>
     <ClInclude Include="Hammer.h">
+      <Filter>ヘッダー ファイル\obj</Filter>
+    </ClInclude>
+    <ClInclude Include="TestPlane.h">
+      <Filter>test</Filter>
+    </ClInclude>
+    <ClInclude Include="TestCube.h">
+      <Filter>test</Filter>
+    </ClInclude>
+    <ClInclude Include="TestModel.h">
+      <Filter>test</Filter>
+    </ClInclude>
+    <ClInclude Include="Kotatu.h">
+      <Filter>ヘッダー ファイル\obj</Filter>
+    </ClInclude>
+    <ClInclude Include="Skybox.h">
       <Filter>ヘッダー ファイル\obj</Filter>
     </ClInclude>
   </ItemGroup>

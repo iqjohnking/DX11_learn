@@ -95,7 +95,8 @@ protected:
 
 public:
 
-	Daruma(Camera* cam);
+	//Daruma(Camera* cam);
+	Daruma(); //ƒJƒƒ‰‚ÉˆË‘¶‚µ‚È‚¢‚æ‚¤‚É•ÏX
 	~Daruma();
 
 	void Init() override;
@@ -134,13 +135,10 @@ public:
 	int GetState() const { return m_state; }
 	void SetState(int state) { m_state = state; }
 
-
 	void SetStableRadius(float r) { m_StableRadius = r; }
 	float GetStableRadius() const { return m_StableRadius; }
 
-	void SetCamera(Camera* cam) { m_Cam = cam; }
-
-
+	//void SetCamera(Camera* cam) { m_Cam = cam; }
 	//void SetGround(Ground* ground);
 
 };

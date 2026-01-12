@@ -31,8 +31,8 @@ void TestCube::Init()
 
 	// +X 面（右）（３）ok
 	m_Vertices[0].position = Vector3(10, -10, -10);
-	m_Vertices[1].position = Vector3(10, 10, -10);
-	m_Vertices[2].position = Vector3(10, 10, 10);
+	m_Vertices[1].position = Vector3(10, +10, -10);
+	m_Vertices[2].position = Vector3(10, +10, 10);
 	m_Vertices[3].position = Vector3(10, -10, 10);
 	m_Vertices[0].normal = m_Vertices[1].normal = m_Vertices[2].normal = m_Vertices[3].normal = Vector3(1, 0, 0);
 	

@@ -72,7 +72,7 @@ void GolfBall::Init()
 
 	//初速度
 	m_Velocity.x = 0.00f;
-	m_Position.x = -10.00f;
+	m_Position.x = 0.00f;
 }
 
 //=======================================
@@ -203,7 +203,7 @@ void GolfBall::Update()
 			m_Cam->SetTargetYaw(GetYaw());
 		}
 		if (m_Position.y < -100.0f) {
-			m_Position = Vector3(0.0f, 50.0f, 0.0f);
+			m_Position = Vector3(0.0f, 0.0f, 0.0f);
 			m_Velocity = Vector3::Zero;
 		}
 		return;
@@ -212,7 +212,7 @@ void GolfBall::Update()
 	// =========================================================
 	// 5) 重力 → 座標更新
 	// =========================================================
-	m_Velocity.y -= gravityPerFrame;
+	//m_Velocity.y -= gravityPerFrame;
 	m_Position += m_Velocity;
 
 	// =========================================================

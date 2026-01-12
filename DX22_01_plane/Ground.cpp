@@ -11,7 +11,10 @@ void Ground::Init()
 	// 頂点データ
 	m_SizeX = 50;
 	m_SizeZ = 50;
-	float m_SizeY =  10.0f / 255.0f;
+	//m_SizeY =  0.0f;
+	m_SizeY =  10.0f / 255.0f;
+	m_UseHeightmap = true;
+
 	m_Vertices.resize(6 * m_SizeX * m_SizeZ);
 	for (int z = 0; z < m_SizeZ; z++) {
 		for (int x = 0; x < m_SizeX; x++) {
@@ -46,54 +49,49 @@ void Ground::Init()
 		}
 	}
 
+	
 	//読み込む画像ファイルのパス
-	const char* filePath = "assets/texture/terrain.png";
+	const char* filePath = "assets/texture/groungHight.png";
 	//画像データを格納するポイント
 	unsigned char* imageData = nullptr;
 	int width, height, channels;
 
-	//グレースケール（１チャネル）（灰階）画像データの読み込み
-	//imageData = stbi_load(filePath, &width, &height, &channels, STBI_rgb_alpha);
-	imageData = stbi_load(filePath, &width, &height, &channels, 1);
-	if (imageData) {
-		for (int z = 0; z <= m_SizeZ; z++) {
-			for (int x = 0; x <= m_SizeX; x++) {
-				//高さを計算する
-				// 
-				//左右上下ピクセル無視することない
-				/*
-				int picX = (int)(    x * (float)(width  - 1) / m_SizeX);
-				int picZ = (int)(    z * (float)(height - 1) / m_SizeZ);
-				*/
-				//左右上下ピクセル無視する
-				int picX = (int)(1 + x * (float)(width  - 2) / m_SizeX);
-				int picZ = (int)(1 + z * (float)(height - 2) / m_SizeZ);
+	// 高さマップを使う場合のみ地形起伏を適用
+	if (m_UseHeightmap)
+	{
+		imageData = stbi_load(filePath, &width, &height, &channels, 1);
+		if (imageData) {
+			for (int z = 0; z <= m_SizeZ; z++) {
+				for (int x = 0; x <= m_SizeX; x++) {
 
-				unsigned char pixelValue = imageData[picZ * width + picX]; //これが 2D座標 (picX, picZ) を 1D配列 index に変換した値 です
-				float heightValue = (float)pixelValue * m_SizeY; //高さ(Y)を0～20に変換//他の変換も試してみよう
-				//float heightValue = (float)pixelValue / 15.0f; //高さ(Y)を0～20に変換//他の変換も試してみよう
+					int picX = (int)(1 + x * (float)(width - 2) / m_SizeX);
+					int picZ = (int)(1 + z * (float)(height - 2) / m_SizeZ);
 
-				//頂点の高さを設定する
-				int n = z * m_SizeX * 6 + x * 6;
-				if (x  < m_SizeX && z < m_SizeZ) {
-					m_Vertices[n].position.y = heightValue;
+					unsigned char pixelValue = imageData[picZ * width + picX];
+					float heightValue = (float)pixelValue * m_SizeY;
+
+					int n = z * m_SizeX * 6 + x * 6;
+					if (x < m_SizeX && z < m_SizeZ) {
+						m_Vertices[n].position.y = heightValue;
+					}
+					if (x != 0 && z != m_SizeZ) {
+						m_Vertices[n - 2].position.y = heightValue;
+						m_Vertices[n - 5].position.y = heightValue;
+					}
+					if (x != m_SizeX && z != 0) {
+						m_Vertices[n - m_SizeX * 6 + 2].position.y = heightValue;
+						m_Vertices[n - m_SizeX * 6 + 3].position.y = heightValue;
+					}
+					if (x != 0 && z != 0) {
+						m_Vertices[n - m_SizeX * 6 - 1].position.y = heightValue;
+					}
 				}
-				if (x != 0		 && z != m_SizeZ) {
-					m_Vertices[n - 2].position.y = heightValue;
-					m_Vertices[n - 5].position.y = heightValue;
-				}
-				if (x != m_SizeX && z != 0) {
-					m_Vertices[n - m_SizeX * 6 + 2].position.y = heightValue;
-					m_Vertices[n - m_SizeX * 6 + 3].position.y = heightValue;
-				}
-				if (x != 0		 && z != 0) {
-					m_Vertices[n - m_SizeX * 6 - 1].position.y = heightValue;
-				}
-			}//x
-		}//z
-		//画像データのメモリを解放
-		stbi_image_free(imageData);
+			}
+			stbi_image_free(imageData);
+		}
 	}
+
+
 	//法線ベクトルを更新する
 	for (int z = 0; z < m_SizeZ; z++) {
 		for (int x = 0; x < m_SizeX; x++) {
@@ -119,7 +117,10 @@ void Ground::Init()
 		}
 	}
 
+	
+
 	// インデックデータ
+	
 	m_Indices.resize(6 * m_SizeX * m_SizeZ);
 	for (int z = 0; z < m_SizeZ; z++) {
 		for (int x = 0; x < m_SizeX; x++) {
@@ -134,6 +135,7 @@ void Ground::Init()
 			m_Indices[n + 5] = n + 5;
 		}
 	}
+	
 
 	// 頂点バッファ生成
 	m_VertexBuffer.Create(m_Vertices);
@@ -155,9 +157,9 @@ void Ground::Init()
 	material.TextureEnable = true;				//テクスチャを使うか否かのフラグ
 	m_Material->Create(material);				// マテリアル情報をセット
 
-	m_Position.y = -100;
-	m_Scale.x = 10.0f;
-	m_Scale.z = 10.0f;
+	m_Position.y = 00;
+	m_Scale.x = 1.0f;
+	m_Scale.z = 1.0f;
 }
 
 //古い

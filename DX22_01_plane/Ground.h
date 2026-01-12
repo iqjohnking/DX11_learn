@@ -30,6 +30,9 @@ private:
 	std::unique_ptr<Material> m_Material;
 	int m_SizeX = 0; // 横サイズ
 	int m_SizeZ = 0; // 縦サイズ
+	float m_SizeY = 0; // 高サイズ
+
+	bool m_UseHeightmap = false; // 高さマップを使うかどうか
 
 public:
 	void Init();

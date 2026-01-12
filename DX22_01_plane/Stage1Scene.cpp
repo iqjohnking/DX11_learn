@@ -3,7 +3,9 @@
 #include "Input.h"
 #include "GolfBall.h"
 #include "Hammer.h"
+#include "Skybox.h"
 #include "Ground.h"
+#include "Kotatu.h"
 #include "Arrow.h"
 #include "Pole.h"
 #include "Texture2D.h"
@@ -31,11 +33,14 @@ void Stage1Scene::Init()
 	// オブジェクトを作成
 	Camera* cam = Game::GetInstance()->GetCamera();
 
-	m_MySceneObjects.emplace_back(Game::GetInstance()->AddObject<GolfBall>(cam));
-	m_MySceneObjects.emplace_back(Game::GetInstance()->AddObject<Ground>());
-	m_MySceneObjects.emplace_back(Game::GetInstance()->AddObject<Arrow>());
-	m_MySceneObjects.emplace_back(Game::GetInstance()->AddObject<Pole>());
-	m_MySceneObjects.emplace_back(Game::GetInstance()->AddObject<Hammer>());
+	m_MySceneObjects.emplace_back(Game::GetInstance()->AddObject<GolfBall>(cam));	//0
+	//m_MySceneObjects.emplace_back(Game::GetInstance()->AddObject<Ground>());		//1
+	m_MySceneObjects.emplace_back(Game::GetInstance()->AddObject<Kotatu>());		//1
+	m_MySceneObjects.emplace_back(Game::GetInstance()->AddObject<Arrow>());			//2
+	m_MySceneObjects.emplace_back(Game::GetInstance()->AddObject<Pole>());			//3
+	m_MySceneObjects.emplace_back(Game::GetInstance()->AddObject<Hammer>());		//4
+	m_MySceneObjects.emplace_back(Game::GetInstance()->AddObject<SkyBox>());		//5
+
 
 	Texture2D* pt1 = Game::GetInstance()->AddObject<Texture2D>();
 	pt1->SetTexture("assets/texture/ui_back.png");
@@ -97,7 +102,9 @@ void Stage1Scene::Init()
 
 	Hammer* hammer = dynamic_cast<Hammer*>(m_MySceneObjects[4]);
 	hammer->SetState(0);
-	hammer->SetPosition(0.0f, -90.0f, 0.0f);
+	hammer->SetPosition(0.0f, 0.0f, 0.0f);
+
+	SkyBox* skybox = dynamic_cast<SkyBox*>(m_MySceneObjects[5]);
 
 }
 
@@ -105,10 +112,11 @@ void Stage1Scene::Init()
 void Stage1Scene::Update()
 {
 	GolfBall* ball = dynamic_cast<GolfBall*>(m_MySceneObjects[0]);
+	//Ground* ground = dynamic_cast<Ground*>(m_MySceneObjects[1]);
 	Arrow* arrow = dynamic_cast<Arrow*>(m_MySceneObjects[2]);
-
+	//Pole* pole = dynamic_cast<Pole*>(m_MySceneObjects[3]);
 	Hammer* hammer = dynamic_cast<Hammer*>(m_MySceneObjects[4]);
-	//
+	//SkyBox* skybox = dynamic_cast<SkyBox*>(m_MySceneObjects[5]);
 	switch (m_State) {
 
 	case 0: // ボール待機
