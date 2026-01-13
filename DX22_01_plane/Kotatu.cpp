@@ -52,9 +52,9 @@ void Kotatu::Init()
 	}
 
 	// モデルによってスケールを調整
-	m_Scale.x = 10;
-	m_Scale.y = 10;
-	m_Scale.z = 10;
+	m_Scale.x = 20;
+	m_Scale.y = 20;
+	m_Scale.z = 20;
 
 	m_Rotation.x = DirectX::XM_PIDIV2;
 

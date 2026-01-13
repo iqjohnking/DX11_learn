@@ -29,7 +29,7 @@ void Camera::Update()
 	//=========================
 	// 1. カメラリセット/マニュアル操作
 	//=========================
-	if (Input::GetKeyTrigger(VK_Q)) {
+	if (Input::GetKeyTrigger(VK_1)) {
 		ResetBehindTarget();
 	}
 
