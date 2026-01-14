@@ -111,6 +111,23 @@ void Stage1Scene::Update()
 	GolfBall* ball = dynamic_cast<GolfBall*>(m_MySceneObjects[0]);
 	Arrow* arrow = dynamic_cast<Arrow*>(m_MySceneObjects[2]);
 	Hammer* hammer = dynamic_cast<Hammer*>(m_MySceneObjects[4]);
+
+
+	Daruma* daruma = dynamic_cast<Daruma*>(m_MySceneObjects[6]);
+	if (daruma && Input::GetKeyTrigger('H'))
+	{
+		Daruma::HitInfo hit{};
+		hit.targetLayer = 3; // 0=head, 1~7=body（適当に）
+		hit.direction = DirectX::SimpleMath::Vector3(1.0f, 0.0f, 0.0f); // +X 方向から押す
+		hit.power = 0.25f; // 押し量（必要なら増減）
+		hit.zone = Daruma::HitInfo::VerticalZone::Middle;
+
+		daruma->ApplyHit(hit);
+	}
+
+
+
+
 	switch (m_State) {
 
 	case 0: // ボール待機

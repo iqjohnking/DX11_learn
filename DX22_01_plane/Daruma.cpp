@@ -65,7 +65,6 @@ void Daruma::Update()
 		EvaluateStability();
 	}
 }
-
 void Daruma::Draw(Camera* cam)
 {
 	m_Cam = cam;
@@ -80,19 +79,22 @@ void Daruma::Draw(Camera* cam)
 		if (layer.state == Layer::State::Removed)
 			continue;
 
-		// cylinder.obj は底ピボット（y=0）なので、中心に戻す
-		static constexpr float kModelCenterY = 0.5f; // (minY+maxY)/2 = 0.5
+		static constexpr float kModelCenterY = 0.5f;
 		Matrix local = Matrix::CreateTranslation(0.0f, -kModelCenterY, 0.0f);
 
-		// 実測：高さ=1、半径=1
-		const float sy = layer.height;  // /1.0f
-		const float sxz = layer.radius;  // /1.0f
+		const float sy = layer.height;
+		const float sxz = layer.radius;
 
 		Matrix s = Matrix::CreateScale(sxz, sy, sxz);
+
 		Matrix r = Matrix::Identity;
+		if (layer.state == Layer::State::Falling)
+		{
+			r = Matrix::CreateFromAxisAngle(layer.fallAxis, layer.fallAngle);
+		}
+
 		Matrix t = Matrix::CreateTranslation(layer.pos);
 
-		// 「先にモデルを中心へ」→「スケール」→「配置」
 		Matrix world = local * s * r * t;
 		Renderer::SetWorldMatrix(&world);
 
@@ -116,7 +118,6 @@ void Daruma::Draw(Camera* cam)
 		}
 	}
 }
-
 void Daruma::Uninit() {}
 
 void Daruma::ApplyHit(const HitInfo& hit)
@@ -236,18 +237,51 @@ void Daruma::StartCollapse(int unstableLayer, const Vector2& avgCenter)
 {
 	m_state = 2;
 
-	Vector2 dir = (avgCenter - m_OriginXZ);
-	if (dir.LengthSquared() <= 0.0001f) dir = Vector2(1.0f, 0.0f);
-	else dir.Normalize();
+	// 誇張演出パラメータ
+	static constexpr float kLaunchSpeedXZRand = 8.2f;	// もっと遠くに飛ばしたい
+	static constexpr float kLaunchSpeedXZBase = 10.8f;	// もっと遠くに飛ばしたい
+	static constexpr float kLaunchSpeedYBase = 2.8f;	// もっと高く跳ねさせたい
+	static constexpr float kLaunchSpeedYRand = 2.2f;	// もっと高く跳ねさせたい
 
-	for (int i = 0; i <= unstableLayer && i < (int)m_Layers.size(); i++)
+	static constexpr float kSpinBase = 6.0f; // rad/sec
+	static constexpr float kSpinRand = 8.0f; // rad/sec
+
+	// 乱数（簡易：フレーム依存でもテスト用途として十分）
+	static uint32_t seed = 0x1234567u;
+	auto Next01 = [&]()
+		{
+			seed = seed * 1664525u + 1013904223u;
+			return (seed & 0x00FFFFFFu) / 16777215.0f; // [0,1]
+		};
+
+	const int last = min(unstableLayer, (int)m_Layers.size() - 1);
+
+	for (int i = 0; i <= last; i++)
 	{
 		auto& layer = m_Layers[i];
 		if (layer.state != Layer::State::Stable) continue;
 
 		layer.state = Layer::State::Falling;
-		layer.fallDir = dir;
 		layer.fallTimer = 0.0f;
+
+		// XZ 平面のランダム方向
+		const float a = Next01() * DirectX::XM_2PI;
+		Vector3 dir(std::cos(a), 0.0f, std::sin(a));
+
+		// ?物線初速
+		const float spXZ = kLaunchSpeedXZBase + kLaunchSpeedXZRand * Next01();
+		const float spY = kLaunchSpeedYBase + kLaunchSpeedYRand * Next01();
+		layer.velocity = dir * spXZ;
+		layer.velocity.y = spY;
+
+		// 「飛び出し方向」を回転軸にする（要望）
+		layer.fallAxis = dir;
+		if (layer.fallAxis.LengthSquared() > 0.0001f) layer.fallAxis.Normalize();
+		else layer.fallAxis = Vector3(0.0f, 0.0f, 1.0f);
+
+		// 回転（ランダムに回す）
+		layer.fallAngle = 0.0f;
+		layer.angularVelocity = kSpinBase + kSpinRand * Next01();
 	}
 }
 
@@ -259,14 +293,17 @@ void Daruma::UpdateStable(Layer& layer)
 
 void Daruma::UpdateFalling(Layer& layer)
 {
-	layer.fallTimer += kDt * FallSpeed;
+	// 誇張演出用の重力（units/sec^2）
+	static constexpr float kGravity = 9.8f * 0.6f;
 
-	layer.centerXZ += layer.fallDir * (FallTranslatePerSec * kDt);
-	layer.pos.x = layer.centerXZ.x;
-	layer.pos.z = layer.centerXZ.y;
+	// 角度更新（回転）
+	layer.fallAngle += layer.angularVelocity * kDt;
 
-	layer.pos.y -= (FallDropPerSecBase + (float)layer.index * 0.05f) * kDt;
+	// ?物線（速度→位置）
+	layer.velocity.y -= kGravity * kDt;
+	layer.pos += layer.velocity * kDt;
 
+	// 画面外に落ちたら消す
 	if (layer.pos.y < RemovedY)
 	{
 		layer.state = Layer::State::Removed;

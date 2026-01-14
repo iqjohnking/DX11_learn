@@ -51,8 +51,18 @@ protected:
 		State state = State::Stable;
 
 		// Falling 用
-		DirectX::SimpleMath::Vector2 fallDir = DirectX::SimpleMath::Vector2(0.0f, 0.0f);
-		float fallTimer = 0.0f;
+		float fallTimer = 0.0f; // 
+
+		DirectX::SimpleMath::Vector2 fallDir = DirectX::SimpleMath::Vector2(0.0f, 0.0f); // XZ 正規化方向
+		float fallAngle = 0.0f;// 倒れ角度（ラジアン）
+		DirectX::SimpleMath::Vector3 fallAxis = DirectX::SimpleMath::Vector3(0.0f, 0.0f, 1.0f); // 倒れ軸（3D、正規化）
+
+		DirectX::SimpleMath::Vector3 velocity = DirectX::SimpleMath::Vector3(0.0f, 0.0f, 0.0f);// 追加：（ワールド速度）
+
+		float angularVelocity = 0.0f;	// 追加：回転速度（rad/sec）
+
+
+
 	};
 
 	//////////////////////////////////////////////////
@@ -62,7 +72,7 @@ protected:
 
 	// 安定判定（平均中心が原点からズレたら倒れる）
 	DirectX::SimpleMath::Vector2 m_OriginXZ = DirectX::SimpleMath::Vector2(0.0f, 0.0f);
-	float m_StableRadius = 0.35f;
+	float m_StableRadius = 1.20f;
 
 	// 0=Stable, 2=Collapse
 	int m_state = 0;
