@@ -11,13 +11,14 @@
 class GolfBall :public Object
 {
 private:
+	static constexpr float	TWO_PI = 6.283185307f;
+	static constexpr float		PI = 3.1415926535;
+
 	//速度
 	DirectX::SimpleMath::Vector3 m_Velocity = DirectX::SimpleMath::Vector3(0.0f, 0.0f, 0.0f);
 	//加速度
 	DirectX::SimpleMath::Vector3 m_Acceleration = DirectX::SimpleMath::Vector3(0.0f, 0.0f, 0.0f);
 	
-	static constexpr float	TWO_PI = 6.283185307f;
-	static constexpr float		PI = 3.1415926535;
 
 	// 物理パラメータ
 	//const float gravity = 1.0f;

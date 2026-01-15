@@ -22,57 +22,56 @@ Hammer::~Hammer()
 //=======================================
 void Hammer::Init()
 {
-
 	// メッシュ読み込み
 	StaticMesh staticmesh;
-
 	//3Dモデルデータ
-	//u8string modelFile = u8"assets/model/cylinder/cylinder.obj";
 	u8string modelFile = u8"assets/model/hammer/uploads_files_1971948_Old_Hammer_OBJ.obj";
-
 	//テクスチャディレクトリ
-	//string texDirectory = "assets/model/cylinder";
 	string texDirectory = "assets/model/hammer";
-
 	//Meshを読み込む
 	string tmpStr1(reinterpret_cast<const char*>(modelFile.c_str()), modelFile.size());
 	staticmesh.Load(tmpStr1, texDirectory);
 
 	m_MeshRenderer.Init(staticmesh);
-
 	// シェーダオブジェクト生成
 	m_Shader.Create("shader/litTextureVS.hlsl", "shader/litTexturePS.hlsl");
-
 	// サブセット情報取得
 	m_subsets = staticmesh.GetSubsets();
-
 	// テクスチャ情報取得
 	m_Textures = staticmesh.GetTextures();
-
 	// マテリアル情報取得	
 	vector<MATERIAL> materials = staticmesh.GetMaterials();
 
 	// マテリアル数分ループ
 	for (int i = 0; i < materials.size(); i++)
 	{
-		// マテリアルオブジェクト生成
-		unique_ptr<Material> m = make_unique<Material>();
-
-		// マテリアル情報をセット
-		m->Create(materials[i]);
-
-		// マテリアルオブジェクトを配列に追加
-		m_Materials.push_back(move(m));
+		unique_ptr<Material> m = make_unique<Material>();// マテリアルオブジェクト生成
+		m->Create(materials[i]);						// マテリアル情報をセット
+		m_Materials.push_back(move(m));					// マテリアルオブジェクトを配列に追加
 	}
 
 	//モデルによってスケールを調整
-	m_Scale.x = 0.1f;
-	m_Scale.y = 0.1f;
-	m_Scale.z = 0.1f;
+	m_Scale.y = 0.2f;
+	m_Scale.z = 0.2f;
+	m_Scale.x = 0.2f;
 
-	//初速度
-	//m_Velocity.x = 0.00f;
-	//m_Position.x = -10.00f;
+	// ここが「初期地点」
+	SetPosition(0, 25, -50);
+
+	m_FixedY = m_Position.y;					// 固定高度
+	m_OrbitCenter = Vector3::Zero;				// 円心（必要ならここで変える）
+	Vector3 rel = m_Position - m_OrbitCenter;	// 初期地点から半径・角度を決める（XZのみ）
+	rel.y = 0.0f;								// Y成分無視
+
+	m_OrbitRadius = std::sqrt(rel.LengthSquared());// 半径
+	if (m_OrbitRadius < 0.0001f)				// 半径ゼロ回避
+	{
+		m_OrbitRadius = 1.0f;
+		rel = Vector3(0.0f, 0.0f, m_OrbitRadius);
+	}
+
+
+	m_OrbitTheta = std::atan2(rel.x, rel.z);	// Z+基準の atan2(x, z)
 }
 
 //=======================================
@@ -88,133 +87,67 @@ void Hammer::Update()
 		if (camFwd.LengthSquared() > 0.0f) camFwd.Normalize();
 
 		Vector3 up(0.0f, 1.0f, 0.0f);
-		Vector3 camRight(
-			up.y * camFwd.z - up.z * camFwd.y,
-			up.z * camFwd.x - up.x * camFwd.z,
-			up.x * camFwd.y - up.y * camFwd.x
-		);
-		if (camRight.LengthSquared() > 0.0f) camRight.Normalize();
+		//Vector3 camRight(
+		//	up.y * camFwd.z - up.z * camFwd.y,
+		//	up.z * camFwd.x - up.x * camFwd.z,
+		//	up.x * camFwd.y - up.y * camFwd.x
+		//);
+		//if (camRight.LengthSquared() > 0.0f) camRight.Normalize();
 
+		static constexpr float OrbitYawStepRad = 0.0314f;
+		static constexpr float OrbitRadiusStep = 0.5f;
+		static constexpr float OrbitHightStep = 0.5f;
 
-		// 中心（いまは原点を周回）
-		const Vector3 center = Vector3::Zero;
+		if (Input::GetKeyPress(VK_A)) m_OrbitTheta += OrbitYawStepRad;
+		if (Input::GetKeyPress(VK_D)) m_OrbitTheta -= OrbitYawStepRad;
 
-		// 現在の半径を「不変の軌道」として使う（XZのみ）
-		Vector3 rel = m_Position - center;
-		rel.y = 0.0f;
+		// 半径変更（円心との距離）
+		if (Input::GetKeyPress(VK_W)) m_OrbitRadius -= OrbitRadiusStep; // W=内側へ
+		if (Input::GetKeyPress(VK_S)) m_OrbitRadius += OrbitRadiusStep; // S=外側へ.
+		m_OrbitRadius = std::clamp(m_OrbitRadius, 6.f, 20.0f);
 
-		float radius = std::sqrt(rel.LengthSquared());
-		if (radius < 0.0001f)
-		{
-			radius = 1.0f;
-			rel = Vector3(0.0f, 0.0f, radius);
-		}
-
-		// 現在角度（Z+ を基準に atan2(x, z)）
-		float theta = std::atan2(rel.x, rel.z);
-
-		// 角速度（1フレームあたりの回転量）※好みで調整
-		static constexpr float OrbitRadPerFrame = 0.05f;
-
-		if (Input::GetKeyPress(VK_A)) theta += OrbitRadPerFrame;
-		if (Input::GetKeyPress(VK_D)) theta -= OrbitRadPerFrame;
+		if (Input::GetKeyPress(VK_Q)) m_FixedY += OrbitHightStep;
+		if (Input::GetKeyPress(VK_E)) m_FixedY -= OrbitHightStep;
 
 		// 角度から軌道上の位置を再構築（半径固定）
-		m_Position.x = center.x + std::sin(theta) * radius;
-		m_Position.z = center.z + std::cos(theta) * radius;
+		m_Position.x = m_OrbitCenter.x + std::sin(m_OrbitTheta) * m_OrbitRadius;
+		m_Position.z = m_OrbitCenter.z + std::cos(m_OrbitTheta) * m_OrbitRadius;
+		m_Position.y = m_FixedY;
 
-		// 慣性で半径が崩れないように、XZ速度は殺す（軌道運動にするため）
-		m_Velocity.x = 0.0f;
-		m_Velocity.z = 0.0f;
+		// 半径や高さが変わらないように
 
 
-		if (Input::GetKeyPress(VK_W)) dir += camFwd;
-		if (Input::GetKeyPress(VK_S)) dir -= camFwd;
-		if (Input::GetKeyPress(VK_Q)) dir += up;
-		if (Input::GetKeyPress(VK_E)) dir -= up;
 	}
 
-	bool hasInput = (dir.LengthSquared() > 0.0f);
 
-	if (hasInput)
-	{
-		dir.Normalize();
-		m_Velocity += dir * AccelPerFrame;
-
-		// 水平速度の上限（元コードそのまま）
-		Vector3 velXZ(m_Velocity.x, 0.0f, m_Velocity.z);
-		float spd2 = velXZ.LengthSquared();
-		if (spd2 > MaxSpeed * MaxSpeed)
-		{
-			float spd = sqrt(spd2);
-			velXZ /= spd;
-			velXZ *= MaxSpeed;
-			m_Velocity.x = velXZ.x;
-			m_Velocity.z = velXZ.z;
-		}
-		// 垂直速度(Y)の上限（追加）
-		if (m_Velocity.y > MaxSpeedY)
-		{
-			m_Velocity.y = MaxSpeedY;
-		}
-		else if (m_Velocity.y < -MaxSpeedY)
-		{
-			m_Velocity.y = -MaxSpeedY;
-		}
-	}
-	else
-	{
-		float spd2 = m_Velocity.LengthSquared();
-		const float stopEps2 = stopEpsilon * stopEpsilon;
-
-		if (spd2 < stopEps2) // 停止判定
-		{
-			m_stopCount++;
-			m_Velocity = Vector3::Zero;
-			m_Acceleration = Vector3::Zero;
-		}
-		else
-		{
-			m_stopCount = 0;
-
-			Vector3 deceleration = -m_Velocity;
-			deceleration.Normalize();
-			m_Acceleration = deceleration * decelPower;
-			m_Velocity += m_Acceleration;
-		}
-	}
-	m_Position += m_Velocity;
-
-	// 常に XZ 平面の原点(0,0,0)を向く
+	// 向き調整
 	{
 		Vector3 toOrigin = Vector3(0.0f, 0.0f, 0.0f) - m_Position;
-		toOrigin.y = 0.0f; // XZ 平面のみ
+		toOrigin.y = 0.0f;
 
 		if (toOrigin.LengthSquared() > 0.0001f)
 		{
 			toOrigin.Normalize();
 
-			// Z+ を前とする yaw（元の atan2(x,z) と合わせる）
 			float targetYaw = atan2(toOrigin.x, toOrigin.z);
 			float currentYaw = m_Rotation.y;
 
 			float delta = targetYaw - currentYaw;
-
-			while (delta > PI)   delta -= TWO_PI;
-			while (delta < -PI)  delta += TWO_PI;
+			while (delta > PI) delta -= TWO_PI;
+			while (delta < -PI) delta += TWO_PI;
 
 			if (delta > turnSpeedPerFrame) delta = turnSpeedPerFrame;
 			if (delta < -turnSpeedPerFrame) delta = -turnSpeedPerFrame;
 
 			currentYaw += delta;
-
 			if (currentYaw > PI) currentYaw -= TWO_PI;
 			if (currentYaw < -PI) currentYaw += TWO_PI;
 
 			m_Rotation.y = currentYaw;
-			m_Rotation.z = PI/2;
+			m_Rotation.z = PI / 2;
 		}
 	}
+
 
 
 	if (m_Cam) {
@@ -238,16 +171,16 @@ void Hammer::Draw(Camera* cam)
 
 	// SRT情報作成
 	Matrix r = Matrix::CreateFromYawPitchRoll(m_Rotation.y, m_Rotation.x, m_Rotation.z);
-	
+
 	// 見た目だけ右にずらす（頭を中央に寄せる）
-	static constexpr float kHeadOffset = 4.87 - 0.32f; // モデル依存値
+	//static constexpr float kHeadOffset = 4.87 - 0.32f; // モデル依存値
+	float HeadOffset = (4.87f - 0.32f) * (m_Scale.x * 10); // モデル依存値
 	Vector3 right(std::cos(m_Rotation.y), 0.0f, -std::sin(m_Rotation.y));
-	Vector3 drawPos = m_Position + right * kHeadOffset;
-	
+	Vector3 drawPos = m_Position + right * HeadOffset;
+
 	//Matrix t = Matrix::CreateTranslation(m_Position.x, m_Position.y, m_Position.z);
 	Matrix t = Matrix::CreateTranslation(drawPos.x, drawPos.y, drawPos.z);
-	
-	
+
 	Matrix s = Matrix::CreateScale(m_Scale.x, m_Scale.y, m_Scale.z);
 
 	Matrix worldmtx;

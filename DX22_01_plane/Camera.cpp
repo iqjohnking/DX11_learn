@@ -35,7 +35,7 @@ void Camera::Update()
 
 	if (m_IsAligningBehind)
 	{
-		float alignSpeed = 0.90f;   // リセットの速さ(0.0f～1.0f) // 大きいほど速くリセットされる
+		float alignSpeed = 1.00f;   // リセットの速さ(0.0f～1.0f) // 大きいほど速くリセットされる
 
 		m_CameraDirH = LerpAngle(m_CameraDirH, m_AlignTargetH, alignSpeed);
 		m_CameraDirV = LerpAngle(m_CameraDirV, m_AlignTargetV, alignSpeed);
@@ -52,18 +52,18 @@ void Camera::Update()
 	else
 	{
 		// INPUTに応じて、カメラの回転角度を操作する
-		if (Input::GetKeyPress(VK_LEFT)) {
-			m_CameraDirH += m_CameraSpdH;
-		}
-		if (Input::GetKeyPress(VK_RIGHT)) {
-			m_CameraDirH -= m_CameraSpdH;
-		}
-		if (Input::GetKeyPress(VK_UP)) {
-			m_CameraDirV += m_CameraSpdV;
-		}
-		if (Input::GetKeyPress(VK_DOWN)) {
-			m_CameraDirV -= m_CameraSpdV;
-		}
+		//if (Input::GetKeyPress(VK_LEFT)) {
+		//	m_CameraDirH += m_CameraSpdH;
+		//}
+		//if (Input::GetKeyPress(VK_RIGHT)) {
+		//	m_CameraDirH -= m_CameraSpdH;
+		//}
+		//if (Input::GetKeyPress(VK_UP)) {
+		//	m_CameraDirV += m_CameraSpdV;
+		//}
+		//if (Input::GetKeyPress(VK_DOWN)) {
+		//	m_CameraDirV -= m_CameraSpdV;
+		//}
 	}
 
 	if (Input::GetKeyTrigger(VK_P)) {

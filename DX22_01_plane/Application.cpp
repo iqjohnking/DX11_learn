@@ -79,6 +79,7 @@ void Application::Run()
 //-----------------------------------------------------------------------------
 bool Application::InitApp()
 {
+	SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
 	// インスタンスハンドルを取得
 	auto hInst = GetModuleHandle(nullptr);
@@ -380,7 +381,7 @@ LRESULT CALLBACK Application::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 
 		if (w > 0 && h > 0)
 		{
-			Application::SetClientSize(w, h);   // 讓 Camera 的 aspect 變正確
+			Application::SetClientSize(w, h);   // 讓 Camera 的 aspect
 			Renderer::ResizeWindow((int)w, (int)h);
 		}
 		break;
