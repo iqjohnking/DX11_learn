@@ -789,3 +789,21 @@ bool Renderer::CreateConstantBufferWrite(
 
 	return true;
 }
+
+
+void Renderer::ToggleFullscreen()
+{
+	if (!m_pSwapChain) return; // まずクラッシュ回避（ログ推奨）
+
+	BOOL fs = FALSE;
+	IDXGIOutput* out = nullptr;
+	HRESULT hr = m_pSwapChain->GetFullscreenState(&fs, &out);
+	if (SUCCEEDED(hr) && out) out->Release();
+
+	m_pSwapChain->SetFullscreenState(!fs, nullptr);
+
+	// 取得新的 client size 後做 Resize（或用 GetDesc / Output 的模式）
+	RECT rc;
+	GetClientRect(Application::GetWindow(), &rc);
+	ResizeWindow(rc.right - rc.left, rc.bottom - rc.top);
+}

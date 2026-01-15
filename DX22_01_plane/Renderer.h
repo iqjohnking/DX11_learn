@@ -146,4 +146,9 @@ public:
 			m_pDeviceContext->OMSetBlendState(m_pBlendState[nBlendState], blendFactor, 0xffffffff);
 		}
 	}
+
+	//=============================================================================
+	// f11 full screen toggle
+	//=============================================================================
+	static void ToggleFullscreen();
 };
