@@ -46,6 +46,7 @@ private:
 
 public:
 
+	GolfBall();
 	GolfBall(Camera* cam);
 	~GolfBall();
 

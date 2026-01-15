@@ -35,7 +35,7 @@ void Camera::Update()
 
 	if (m_IsAligningBehind)
 	{
-		float alignSpeed = 0.15f;   // 補間速度
+		float alignSpeed = 0.90f;   // リセットの速さ(0.0f～1.0f) // 大きいほど速くリセットされる
 
 		m_CameraDirH = LerpAngle(m_CameraDirH, m_AlignTargetH, alignSpeed);
 		m_CameraDirV = LerpAngle(m_CameraDirV, m_AlignTargetV, alignSpeed);

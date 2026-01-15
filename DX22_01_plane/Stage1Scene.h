@@ -2,6 +2,8 @@
 #include "Scene.h"
 #include "Object.h"
 
+#include "GolfBall.h"
+
 class Texture2D;
 
 class Stage1Scene : public Scene
@@ -17,6 +19,8 @@ private:
 	Texture2D* m_UiParNumber = nullptr;
 	Texture2D* m_UiStrokeOnes = nullptr;
 	Texture2D* m_UiStrokeTens = nullptr;
+
+	GolfBall* m_Ball = nullptr;
 
 	void Init(); // ‰Šú‰»
 	void Uninit(); // I—¹ˆ—

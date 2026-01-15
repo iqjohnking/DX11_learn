@@ -13,8 +13,22 @@ private:
 	static constexpr float	TWO_PI = 6.283185307f;
 	static constexpr float		PI = 3.1415926535;
 
-	//キャラクターの向き
-	//DirectX::SimpleMath::Vector3 playerDir = DirectX::SimpleMath::Vector3(0.0f, 0.0f, 1.0f);
+	//速度
+	DirectX::SimpleMath::Vector3 m_Velocity = DirectX::SimpleMath::Vector3(0.0f, 0.0f, 0.0f);
+	//加速度
+	DirectX::SimpleMath::Vector3 m_Acceleration = DirectX::SimpleMath::Vector3(0.0f, 0.0f, 0.0f);
+	//向き
+	DirectX::SimpleMath::Vector3 playerDir = DirectX::SimpleMath::Vector3(0.0f, 0.0f, 1.0f);
+
+	float AccelPerFrame = 0.35f;
+	float decelPower = 0.05f; // 減速度はこれを掛ける、大きいほど減速が早い
+	float MaxSpeed = 2.0f;
+	float MaxSpeedY = 0.2f;
+
+	float turnSpeedPerFrame = 0.314f; // ラジアン
+
+	float stopEpsilon = 0.3f;
+
 
 	// 描画の為の情報（メッシュに関わる情報）
 	MeshRenderer m_MeshRenderer; // 頂点バッファ・インデックスバッファ・インデックス数
@@ -32,6 +46,9 @@ private:
 	int m_stopCount = 0;
 
 public:
+
+	Hammer();
+	~Hammer();
 
 	void Init();
 	void Update();

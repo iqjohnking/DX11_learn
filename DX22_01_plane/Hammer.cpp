@@ -8,6 +8,15 @@
 using namespace std;
 using namespace DirectX::SimpleMath;
 
+Hammer::Hammer()
+{
+	m_Cam = Game::GetInstance()->GetCamera();
+}
+
+Hammer::~Hammer()
+{
+}
+
 //=======================================
 //初期化処理
 //=======================================
@@ -71,7 +80,149 @@ void Hammer::Init()
 //=======================================
 void Hammer::Update()
 {
-	
+	Vector3 dir(0, 0, 0);
+	if (m_Cam)
+	{
+		Vector3 camFwd = GetPosition() - m_Cam->GetPosition();
+		camFwd.y = 0.0f;
+		if (camFwd.LengthSquared() > 0.0f) camFwd.Normalize();
+
+		Vector3 up(0.0f, 1.0f, 0.0f);
+		Vector3 camRight(
+			up.y * camFwd.z - up.z * camFwd.y,
+			up.z * camFwd.x - up.x * camFwd.z,
+			up.x * camFwd.y - up.y * camFwd.x
+		);
+		if (camRight.LengthSquared() > 0.0f) camRight.Normalize();
+
+
+		// 中心（いまは原点を周回）
+		const Vector3 center = Vector3::Zero;
+
+		// 現在の半径を「不変の軌道」として使う（XZのみ）
+		Vector3 rel = m_Position - center;
+		rel.y = 0.0f;
+
+		float radius = std::sqrt(rel.LengthSquared());
+		if (radius < 0.0001f)
+		{
+			radius = 1.0f;
+			rel = Vector3(0.0f, 0.0f, radius);
+		}
+
+		// 現在角度（Z+ を基準に atan2(x, z)）
+		float theta = std::atan2(rel.x, rel.z);
+
+		// 角速度（1フレームあたりの回転量）※好みで調整
+		static constexpr float OrbitRadPerFrame = 0.05f;
+
+		if (Input::GetKeyPress(VK_A)) theta += OrbitRadPerFrame;
+		if (Input::GetKeyPress(VK_D)) theta -= OrbitRadPerFrame;
+
+		// 角度から軌道上の位置を再構築（半径固定）
+		m_Position.x = center.x + std::sin(theta) * radius;
+		m_Position.z = center.z + std::cos(theta) * radius;
+
+		// 慣性で半径が崩れないように、XZ速度は殺す（軌道運動にするため）
+		m_Velocity.x = 0.0f;
+		m_Velocity.z = 0.0f;
+
+
+		if (Input::GetKeyPress(VK_W)) dir += camFwd;
+		if (Input::GetKeyPress(VK_S)) dir -= camFwd;
+		if (Input::GetKeyPress(VK_Q)) dir += up;
+		if (Input::GetKeyPress(VK_E)) dir -= up;
+	}
+
+	bool hasInput = (dir.LengthSquared() > 0.0f);
+
+	if (hasInput)
+	{
+		dir.Normalize();
+		m_Velocity += dir * AccelPerFrame;
+
+		// 水平速度の上限（元コードそのまま）
+		Vector3 velXZ(m_Velocity.x, 0.0f, m_Velocity.z);
+		float spd2 = velXZ.LengthSquared();
+		if (spd2 > MaxSpeed * MaxSpeed)
+		{
+			float spd = sqrt(spd2);
+			velXZ /= spd;
+			velXZ *= MaxSpeed;
+			m_Velocity.x = velXZ.x;
+			m_Velocity.z = velXZ.z;
+		}
+		// 垂直速度(Y)の上限（追加）
+		if (m_Velocity.y > MaxSpeedY)
+		{
+			m_Velocity.y = MaxSpeedY;
+		}
+		else if (m_Velocity.y < -MaxSpeedY)
+		{
+			m_Velocity.y = -MaxSpeedY;
+		}
+	}
+	else
+	{
+		float spd2 = m_Velocity.LengthSquared();
+		const float stopEps2 = stopEpsilon * stopEpsilon;
+
+		if (spd2 < stopEps2) // 停止判定
+		{
+			m_stopCount++;
+			m_Velocity = Vector3::Zero;
+			m_Acceleration = Vector3::Zero;
+		}
+		else
+		{
+			m_stopCount = 0;
+
+			Vector3 deceleration = -m_Velocity;
+			deceleration.Normalize();
+			m_Acceleration = deceleration * decelPower;
+			m_Velocity += m_Acceleration;
+		}
+	}
+	m_Position += m_Velocity;
+
+	// 常に XZ 平面の原点(0,0,0)を向く
+	{
+		Vector3 toOrigin = Vector3(0.0f, 0.0f, 0.0f) - m_Position;
+		toOrigin.y = 0.0f; // XZ 平面のみ
+
+		if (toOrigin.LengthSquared() > 0.0001f)
+		{
+			toOrigin.Normalize();
+
+			// Z+ を前とする yaw（元の atan2(x,z) と合わせる）
+			float targetYaw = atan2(toOrigin.x, toOrigin.z);
+			float currentYaw = m_Rotation.y;
+
+			float delta = targetYaw - currentYaw;
+
+			while (delta > PI)   delta -= TWO_PI;
+			while (delta < -PI)  delta += TWO_PI;
+
+			if (delta > turnSpeedPerFrame) delta = turnSpeedPerFrame;
+			if (delta < -turnSpeedPerFrame) delta = -turnSpeedPerFrame;
+
+			currentYaw += delta;
+
+			if (currentYaw > PI) currentYaw -= TWO_PI;
+			if (currentYaw < -PI) currentYaw += TWO_PI;
+
+			m_Rotation.y = currentYaw;
+			m_Rotation.z = PI/2;
+		}
+	}
+
+
+	if (m_Cam) {
+		m_Cam->SetTarget(m_Position);
+		m_Cam->SetTargetYaw(GetYaw());
+		m_Cam->ResetBehindTarget();
+	}
+
 }
 
 
@@ -87,7 +238,16 @@ void Hammer::Draw(Camera* cam)
 
 	// SRT情報作成
 	Matrix r = Matrix::CreateFromYawPitchRoll(m_Rotation.y, m_Rotation.x, m_Rotation.z);
-	Matrix t = Matrix::CreateTranslation(m_Position.x, m_Position.y, m_Position.z);
+	
+	// 見た目だけ右にずらす（頭を中央に寄せる）
+	static constexpr float kHeadOffset = 4.87 - 0.32f; // モデル依存値
+	Vector3 right(std::cos(m_Rotation.y), 0.0f, -std::sin(m_Rotation.y));
+	Vector3 drawPos = m_Position + right * kHeadOffset;
+	
+	//Matrix t = Matrix::CreateTranslation(m_Position.x, m_Position.y, m_Position.z);
+	Matrix t = Matrix::CreateTranslation(drawPos.x, drawPos.y, drawPos.z);
+	
+	
 	Matrix s = Matrix::CreateScale(m_Scale.x, m_Scale.y, m_Scale.z);
 
 	Matrix worldmtx;

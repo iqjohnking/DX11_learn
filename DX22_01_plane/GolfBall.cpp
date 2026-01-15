@@ -8,6 +8,11 @@
 using namespace std;
 using namespace DirectX::SimpleMath;
 
+GolfBall::GolfBall()
+{
+	m_Cam = Game::GetInstance()->GetCamera();
+}
+
 GolfBall::GolfBall(Camera* cam)
 {
 	SetCamera(cam);
@@ -81,13 +86,12 @@ void GolfBall::Init()
 void GolfBall::Update()
 {
 	Vector3 oldPos = m_Position;
-
 	// ===== 物理パラメータ =====
 	const float dt = 1.0f / 60.0f;      // Δt（1フレームあたりの時間）
 	const float accelPerFrame = 0.35f;  // 毎frameの加速度
 	const float maxSpeed = 1.80f;       // 最大速度
 	const float decelPower = 0.05f;     // 減速度
-	const float stopEpsilon = 0.03f;    // 
+	const float stopEpsilon = 0.03f;    // 停止判定の閾値
 	const float gravityAccel = 9.8f;    // 重力加速度
 	const float gravityPerFrame = gravityAccel * dt;
 
@@ -95,6 +99,7 @@ void GolfBall::Update()
 	// 1) 入力方向（カメラ基準）
 	// =========================================================
 	Vector3 dir(0, 0, 0);
+
 	if (m_Cam)
 	{
 		Vector3 camFwd = GetPosition() - m_Cam->GetPosition();
@@ -135,10 +140,10 @@ void GolfBall::Update()
 			m_Velocity = Vector3::Zero;
 
 			// camera追従（元の処理は残す）
-			if (m_Cam) {
-				m_Cam->SetTarget(m_Position);
-				m_Cam->SetTargetYaw(GetYaw());
-			}
+			//if (m_Cam) {
+			//	m_Cam->SetTarget(m_Position);
+			//	m_Cam->SetTargetYaw(GetYaw());
+			//}
 
 			// リスポーン（元の処理は残す）
 			if (m_Position.y < -100.0f) {
