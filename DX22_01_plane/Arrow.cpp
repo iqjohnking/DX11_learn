@@ -88,8 +88,8 @@ void Arrow::Update()
 	else if (m_State == 2)
 	{
 		// ‘å‚«‚³‚ð•ÏX‚³‚¹‚é
-		m_Scale.z += 0.04f;
-		if (m_Scale.z > 4)m_Scale.z = 1;
+		m_Scale.z = m_MinLenZ + (m_MaxLenZ - m_MinLenZ) * m_Power01;
+
 	}
 }
 
@@ -164,4 +164,21 @@ Vector3 Arrow::GetVector()
 	res *= m_Scale.z;
 
 	return res;
+}
+
+void Arrow::SetPower01(float t)
+{
+	m_Power01 = std::clamp(t, 0.0f, 1.0f);
+}
+
+
+void Arrow::SetDirectionXZ(const Vector3& dir)
+{
+	Vector3 d = -dir;
+	d.y = 0.0f;
+	if (d.LengthSquared() < 1e-6f) return;
+	d.Normalize();
+
+	//
+	m_Rotation.y = atan2(d.x, d.z);
 }

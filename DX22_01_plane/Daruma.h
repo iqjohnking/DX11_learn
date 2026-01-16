@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include "Object.h"
@@ -5,39 +6,23 @@
 #include "StaticMesh.h"
 #include "Texture.h"
 #include "Material.h"
-#include "utility.h" //文字列変換用
-
+#include "utility.h"
 
 class Daruma : public Object
 {
 protected:
-	// ===== cylinder.obj の実測サイズ（ユーザー確認：Y=1 / X=Z=2）=====
-	// つまり：高さ=1、半径=1（直径=2）
-	static constexpr float kModelHeight = 1.0f; // Y
-	static constexpr float kModelRadius = 1.0f; // XZ の半径
-
-	// ===== 調整用（Daruma専用）=====
 	static constexpr float kDt = 1.0f / 60.0f;
 
-	// 倒れ演出（擬似物理）
-	static constexpr float FallSpeed = 1.2f;
-	static constexpr float FallTranslatePerSec = 0.35f;
-	static constexpr float FallDropPerSecBase = 0.6f;
 	static constexpr float RemovedY = -50.0f;
-
-	static constexpr int LAYER_COUNT = 8; // 0=head + 1~7=body
+	static constexpr int   LAYER_COUNT = 8; // 0=head + 1~7=body
 
 	struct Layer
 	{
-		int index = 0; // 0=head, 1~7=body
+		int index = 0;
 
-		// 判定用（XZだけ使う）
 		DirectX::SimpleMath::Vector2 centerXZ = DirectX::SimpleMath::Vector2(0.0f, 0.0f);
-
-		// 表示用（Yは積み上げ、XZは centerXZ から作る想定）
 		DirectX::SimpleMath::Vector3 pos = DirectX::SimpleMath::Vector3(0.0f, 0.0f, 0.0f);
 
-		// 円柱パラメータ
 		float radius = 0.5f;
 		float height = 1.0f;
 
@@ -45,53 +30,48 @@ protected:
 		{
 			Stable,
 			Falling,
+			Restacking,
 			Removed
 		};
 
 		State state = State::Stable;
 
-		// Falling 用
-		float fallTimer = 0.0f; // 
+		// Falling
+		float fallTimer = 0.0f;
 
-		DirectX::SimpleMath::Vector2 fallDir = DirectX::SimpleMath::Vector2(0.0f, 0.0f); // XZ 正規化方向
-		float fallAngle = 0.0f;// 倒れ角度（ラジアン）
-		DirectX::SimpleMath::Vector3 fallAxis = DirectX::SimpleMath::Vector3(0.0f, 0.0f, 1.0f); // 倒れ軸（3D、正規化）
+		DirectX::SimpleMath::Vector2 fallDir = DirectX::SimpleMath::Vector2(0.0f, 0.0f);
+		float fallAngle = 0.0f;
+		DirectX::SimpleMath::Vector3 fallAxis = DirectX::SimpleMath::Vector3(0.0f, 0.0f, 1.0f);
 
-		DirectX::SimpleMath::Vector3 velocity = DirectX::SimpleMath::Vector3(0.0f, 0.0f, 0.0f);// 追加：（ワールド速度）
+		DirectX::SimpleMath::Vector3 velocity = DirectX::SimpleMath::Vector3(0.0f, 0.0f, 0.0f);
+		float angularVelocity = 0.0f;
 
-		float angularVelocity = 0.0f;	// 追加：回転速度（rad/sec）
-
-
-
+		float targetY = 0.0f;
 	};
 
-	//////////////////////////////////////////////////
-	// Daruma 本体データ
-	//////////////////////////////////////////////////
 	std::vector<Layer> m_Layers;
 
-	// 安定判定（平均中心が原点からズレたら倒れる）
 	DirectX::SimpleMath::Vector2 m_OriginXZ = DirectX::SimpleMath::Vector2(0.0f, 0.0f);
-	float m_StableRadius = 1.20f;
+	float m_StableRadius = 0.8f; // slightly larger than 1.0f
 
-	// 0=Stable, 2=Collapse
 	int m_state = 0;
 	int m_unstableLayer = -1;
 
-	//////////////////////////////////////////////////
-	// renderer 関連
-	//////////////////////////////////////////////////
+	bool m_restackActive = false;
+	int  m_flyingLayerIndex = -1;
+
 	MeshRenderer m_MeshRenderer;
 
 	std::vector<std::unique_ptr<Material>> m_Materials;
 	std::vector<SUBSET> m_subsets;
 	std::vector<std::unique_ptr<Texture>> m_Textures;
+	std::vector<std::unique_ptr<Texture>> m_BodyTextures; // NEW: body textures
+	std::vector<std::unique_ptr<Texture>> m_FootTextures; // NEW: body textures
+
 
 	Camera* m_Cam = nullptr;
 
-	//////////////////////////////////////////////////
-	// 内部処理
-	//////////////////////////////////////////////////
+protected:
 	void BuildLayers();
 	DirectX::SimpleMath::Vector2 CalcAverageCenter(int endIndex) const;
 	void EvaluateStability();
@@ -99,6 +79,15 @@ protected:
 
 	void UpdateStable(Layer& layer);
 	void UpdateFalling(Layer& layer);
+
+	void StartLaunch(int layerIndex, const DirectX::SimpleMath::Vector2& dirXZ, float power);
+	bool IsSeparatedFromAll(int layerIndex) const;
+
+	void StartRestack(int flyingIndex);
+	void UpdateRestacking(Layer& layer);
+	bool IsAllSettled() const;
+
+	void RebuildTargetYs(int excludeIndex = -1);
 
 public:
 	Daruma();
@@ -112,18 +101,14 @@ public:
 	struct HitInfo
 	{
 		int targetLayer = 0;
-
-		// 方向（XZ 使用、normalize）
-		DirectX::SimpleMath::Vector3 direction =
-			DirectX::SimpleMath::Vector3(1.0f, 0.0f, 0.0f);
-
+		DirectX::SimpleMath::Vector3 direction = DirectX::SimpleMath::Vector3(1.0f, 0.0f, 0.0f);
 		float power = 0.0f;
 
 		enum class VerticalZone
 		{
-			Upper,   // targetLayer と targetLayer-1
-			Middle,  // targetLayer のみ
-			Lower    // targetLayer と targetLayer+1
+			Upper,
+			Middle,
+			Lower
 		};
 
 		VerticalZone zone = VerticalZone::Middle;
@@ -131,9 +116,18 @@ public:
 
 	void ApplyHit(const HitInfo& hit);
 
+	// pick which layer is hit by world Y
+	int PickLayerByY(float worldY) const;
+
 	int GetState() const { return m_state; }
 	void SetState(int state) { m_state = state; }
 
 	void SetStableRadius(float r) { m_StableRadius = r; }
 	float GetStableRadius() const { return m_StableRadius; }
+
+
+	// game-end and helpers
+	void ForceWin_ThrowAllButHead(const DirectX::SimpleMath::Vector3& dirXZ, float power = 100.0f);
+	bool IsHeadRemoved() const;
+	bool IsAllBodyRemoved() const;
 };

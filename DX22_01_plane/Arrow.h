@@ -21,6 +21,10 @@ private:
 	std::vector<SUBSET> m_subsets;
 	std::vector<std::unique_ptr<Texture>> m_Textures; // テクスチャ
 
+	float m_Power01 = 0.0f;
+	float m_MinLenZ = 1.0f;  // 最短
+	float m_MaxLenZ = 4.0f;  // 最長
+
 	int m_State = 0; // 0:非表示・1:方向選択・2:パワー選択
 
 public:
@@ -35,5 +39,14 @@ public:
 
 	// 矢印のベクトルを取得
 	DirectX::SimpleMath::Vector3 GetVector();
+
+	void SetPower01(float t);
+
+	void SetDirectionXZ(const DirectX::SimpleMath::Vector3& dir);
+
+	void SetPosition(const DirectX::SimpleMath::Vector3& pos)
+	{
+		m_Position = pos;
+	}
 };
 
