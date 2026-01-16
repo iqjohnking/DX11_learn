@@ -26,6 +26,8 @@ void TitleScene::Init()
 	bg->SetScale(1920.0f,1080.0f, 0.0f);
 	m_MySceneObjects.emplace_back(bg);
 
+
+	Game::GetInstance()->GetSound()->Play(SOUND_LABEL_SE004);
 }
 
 // XV

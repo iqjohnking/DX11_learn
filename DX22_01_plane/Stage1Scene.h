@@ -15,6 +15,8 @@ private:
 	int m_Par = 0;
 	int m_StrokeCount = 0;
 
+	bool m_IsWin = false;
+
 	// UI refs
 	Texture2D* m_UiParNumber = nullptr;
 	Texture2D* m_UiStrokeOnes = nullptr;
@@ -51,6 +53,8 @@ public:
 	~Stage1Scene();
 
 	int GetScore() const;
+	bool GetIsWin() const;
+	int GetTimer() const { return (int)m_EndTimer; }
 
 	void Update();
 };

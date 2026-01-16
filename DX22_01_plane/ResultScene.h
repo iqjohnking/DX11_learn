@@ -16,6 +16,7 @@ public:
 	~ResultScene(); // デストラクタ
 
 	void Update(); // 更新
-	void SetScore(int score); // スコアセット
+	void SetScore(int score , bool isWin); // スコアセット
+	void SetIsWin(bool isWin); // 勝敗セット
 };
 

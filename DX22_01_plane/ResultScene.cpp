@@ -24,24 +24,20 @@ void ResultScene::Init()
 	pt->SetScale(1920.0f, 1080.0f, 0.0f);
 	m_MySceneObjects.emplace_back(pt);
 
+
+	//Texture2D* pt1 = Game::GetInstance()->AddObject<Texture2D>();
+	//pt1->SetTexture("assets/texture/background3.png");
+	//pt1->SetScale(1920.0f, 1080.0f, 0.0f);
+	//m_MySceneObjects.emplace_back(pt1);
+
 	//リザルト文字列オブジェクト生成
-	Texture2D* pt2 = Game::GetInstance()->AddObject<Texture2D>();
-	pt2->SetTexture("assets/texture/resultString.png");
-	pt2->SetPosition(300.0f, 0.0f, 0.0f);
-	pt2->SetScale(700.0f, 100.0f, 0.0f);
-	pt2->SetUV(1, 1, 1, 13);
-	m_MySceneObjects.emplace_back(pt2);
+	Texture2D* pt1 = Game::GetInstance()->AddObject<Texture2D>();
+	pt1->SetTexture("assets/texture/resultString.png");
+	pt1->SetPosition(0.0f, 0.0f, 0.0f);
+	pt1->SetScale(1400.0f, 200.0f, 0.0f);
+	pt1->SetUV(1, 1, 1, 13);
+	m_MySceneObjects.emplace_back(pt1);
 
-	Texture2D* pt3 = Game::GetInstance()->AddObject<Texture2D>();
-	pt3->SetTexture("assets/texture/golf_jou_man.png");
-	pt3->SetPosition(-300.0f, 0.0f, 0.0f);
-	pt3->SetScale(360.0f, 400.0f, 0.0f);
-	m_MySceneObjects.emplace_back(pt3);
-
-	Texture2D* pt4 = Game::GetInstance()->AddObject<Texture2D>();
-	pt4->SetTexture("assets/texture/background3.png");
-	pt4->SetScale(1920.0f, 1080.0f, 0.0f);
-	m_MySceneObjects.emplace_back(pt4);
 
 
 
@@ -72,12 +68,28 @@ void ResultScene::Uninit()
 }
 
 // スコアセット
-void ResultScene::SetScore(int score)
+void ResultScene::SetScore(int score, bool isWin)
 {
+	Texture2D* bgObj = dynamic_cast<Texture2D*>(m_MySceneObjects[0]);
 	Texture2D* stringObj = dynamic_cast<Texture2D*>(m_MySceneObjects[1]);
+
+
+	if (!isWin) {
+		bgObj->SetTexture("assets/texture/background3.png");
+		stringObj->SetUV(1, 1, 1, 13);
+
+		Game::GetInstance()->GetSound()->Play(SOUND_LABEL_SE004);
+
+		return;
+	}
+
+
+	Game::GetInstance()->GetSound()->Play(SOUND_LABEL_SE002);
+
+	bgObj->SetTexture("assets/texture/background2.png");
 	switch (score) {
 	case -4:
-		stringObj->SetUV(1, 2, 1, 13); 
+		stringObj->SetUV(1, 2, 1, 13);
 		break;
 	case -3:
 		stringObj->SetUV(1, 3, 1, 13);
@@ -101,19 +113,27 @@ void ResultScene::SetScore(int score)
 		stringObj->SetUV(1, 9, 1, 13);
 		break;
 	case  4:
-		stringObj->SetUV(1,10, 1, 13);
+		stringObj->SetUV(1, 10, 1, 13);
 		break;
 	case  5:
-		stringObj->SetUV(1,11, 1, 13);
+		stringObj->SetUV(1, 11, 1, 13);
 		break;
 	case  6:
-		stringObj->SetUV(1,12, 1, 13);
+		stringObj->SetUV(1, 12, 1, 13);
 		break;
 	default:
-		stringObj->SetUV(1,13, 1, 13);
+		stringObj->SetUV(1, 13, 1, 13);
 		break;
-	
-	
-	
+	}
+}
+
+void ResultScene::SetIsWin(bool isWin)
+{
+	Texture2D* bgObj = dynamic_cast<Texture2D*>(m_MySceneObjects[0]);
+	if (isWin) {
+		bgObj->SetTexture("assets/texture/background2.png");
+	}
+	else {
+		bgObj->SetTexture("assets/texture/background3.png");
 	}
 }

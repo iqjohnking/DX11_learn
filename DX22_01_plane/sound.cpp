@@ -109,16 +109,16 @@ void Sound::Uninit(void)
 		{
 			m_pSourceVoice[i]->Stop(0);
 			m_pSourceVoice[i]->FlushSourceBuffers();
-			m_pSourceVoice[i]->DestroyVoice();			// オーディオグラフからソースボイスを削除
-			delete[]  m_DataBuffer[i];
+			m_pSourceVoice[i]->DestroyVoice();
+			m_pSourceVoice[i] = nullptr;
 		}
+		delete[] m_DataBuffer[i];
+		m_DataBuffer[i] = nullptr;
 	}
 
-	m_pMasteringVoice->DestroyVoice();
+	if (m_pMasteringVoice) { m_pMasteringVoice->DestroyVoice(); m_pMasteringVoice = nullptr; }
+	if (m_pXAudio2) { m_pXAudio2->Release(); m_pXAudio2 = nullptr; }
 
-	if (m_pXAudio2) m_pXAudio2->Release();
-
-	// COMの破棄
 	CoUninitialize();
 }
 

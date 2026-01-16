@@ -27,6 +27,8 @@ void Game::Init()
 	Renderer::Init();
 	Input::Create();
 
+	// サウンド更新
+	m_Instance->m_Sound.Init();
 	// カメラ初期化
 	m_Instance->m_Camera.Init();
 
@@ -53,6 +55,8 @@ void Game::Init()
 void Game::Update()
 {
 	Input::Update();
+
+	
 
 	//シーン更新
 	m_Instance->m_Scene->Update();
@@ -84,6 +88,8 @@ void Game::Draw()
 // 終了処理
 void Game::Uninit()
 {
+	// サウンド終了処理
+	m_Instance->m_Sound.Uninit();
 	// カメラ終了処理
 	m_Instance->m_Camera.Uninit();
 
@@ -108,12 +114,16 @@ void Game::ChangeScene(SceneName sceneName)
 {
 	// 読み込み済みシーンの削除
 	int score = 0;
+	bool isWin = false;
+
 	if (m_Instance->m_Scene != nullptr) {
 		// ステージ1シーンからリザルトシーンへ移行する場合、スコアを取得しておく
 		if (Stage1Scene* stage1Scene = dynamic_cast<Stage1Scene*>(m_Instance->m_Scene))
 		{
 			score = stage1Scene->GetScore();
+			isWin = stage1Scene->GetIsWin();
 		}
+
 		delete m_Instance->m_Scene;
 		m_Instance->m_Scene = nullptr;
 	}
@@ -130,7 +140,8 @@ void Game::ChangeScene(SceneName sceneName)
 		break;
 	case RESULT:
 		m_Instance->m_Scene = new ResultScene();
-		dynamic_cast<ResultScene*>(m_Instance->m_Scene)->SetScore(score);
+		//dynamic_cast<ResultScene*>(m_Instance->m_Scene)->SetIsWin(isWin);
+		dynamic_cast<ResultScene*>(m_Instance->m_Scene)->SetScore(score, isWin);
 		break;
 	default:
 		break;

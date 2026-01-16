@@ -4,6 +4,7 @@
 //#include "GolfBall.h"
 //#include "Ground.h"
 
+#include "sound.h"
 #include "Renderer.h"
 #include "TitleScene.h"
 #include "Stage1Scene.h"
@@ -25,14 +26,15 @@ private:
 	static Game* m_Instance;
 	Scene* m_Scene;
 
+	//int isWin = false;
+
 	// カメラ
 	Camera  m_Camera;
 
-	// テストオブジェクト
-	//GolfBall m_Ball;
-
 	//Objects
 	std::vector<std::unique_ptr<Object>> m_Objects;
+
+	Sound m_Sound;
 
 public:
 	Game(); // コンストラクタ
@@ -47,6 +49,7 @@ public:
 
 	//Camera* GetCamera() { return &m_Instance->m_Camera; }
 	Camera* GetCamera() { return &m_Camera; }
+	Sound* GetSound() { return &m_Sound; }
 
 	void ChangeScene(SceneName sceneName); // シーン変更
 	void DeleteObject(Object* ptr); // オブジェクト削除

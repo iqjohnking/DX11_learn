@@ -5,10 +5,12 @@
 // サウンドファイル
 typedef enum
 {
-	SOUND_LABEL_BGM000 = 0,		// サンプルBGM
-	//SOUND_LABEL_BGM001,		// サンプルBGM
-	//SOUND_LABEL_SE000,		// サンプルSE
-	//SOUND_LABEL_SE001,		// サンプルSE
+	SOUND_LABEL_BGM000 = 0,	// サンプルBGM		music.wav", true},	
+	SOUND_LABEL_SE000,		// サンプルSE	   HAJIME.wav", false},	
+	SOUND_LABEL_SE001,		// サンプルSE	   don.wav", false},	
+	SOUND_LABEL_SE002,		// サンプルSE	   KATU.wav", false},	
+	SOUND_LABEL_SE003,		// サンプルSE	   BAKUHATU.wav", false},
+	SOUND_LABEL_SE004,		// サンプルSE	   YOOO.wav", false},	
 
 	SOUND_LABEL_MAX,
 } SOUND_LABEL;
@@ -24,13 +26,12 @@ private:
 
 	PARAM m_param[SOUND_LABEL_MAX] =
 	{
-		{"asset/BGM/sample000.wav", true},	// サンプルBGM（ループさせるのでtrue設定）
-//		{"asset/BGM/○○○.wav", true},	// サンプルBGM
-//		{"asset/SE/○○○.wav", false},  		// サンプルSE（ループしないのでfalse設定）
-//		{"asset/SE/○○○.wav", false},		// サンプルSE
-
-
-
+		{"assets/music/music.wav", true},
+		{"assets/music/HAJIME.wav", false},
+		{"assets/music/don.wav", false},
+		{"assets/music/KATU.wav", false},
+		{"assets/music/BAKUHATU.wav", false},
+		{"assets/music/YOOO.wav", false},
 	};
 
 	IXAudio2* m_pXAudio2 = NULL;
