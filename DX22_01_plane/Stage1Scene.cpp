@@ -103,6 +103,10 @@ void Stage1Scene::Init()
 
 void Stage1Scene::Uninit()
 {
+    for (auto& o : m_MySceneObjects) {
+        Game::GetInstance()->DeleteObject(o);
+    }
+    m_MySceneObjects.clear();
 }
 
 void Stage1Scene::Update()

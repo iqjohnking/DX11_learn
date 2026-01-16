@@ -21,7 +21,7 @@ void ResultScene::Init()
 	// 背景画像オブジェクト生成
 	Texture2D* pt = Game::GetInstance()->AddObject<Texture2D>();
 	pt->SetTexture("assets/texture/background2.png");
-	pt->SetScale(1280.0f, 720.0f, 0.0f);
+	pt->SetScale(1920.0f, 1080.0f, 0.0f);
 	m_MySceneObjects.emplace_back(pt);
 
 	//リザルト文字列オブジェクト生成
@@ -38,6 +38,12 @@ void ResultScene::Init()
 	pt3->SetScale(360.0f, 400.0f, 0.0f);
 	m_MySceneObjects.emplace_back(pt3);
 
+	Texture2D* pt4 = Game::GetInstance()->AddObject<Texture2D>();
+	pt4->SetTexture("assets/texture/background3.png");
+	pt4->SetScale(1920.0f, 1080.0f, 0.0f);
+	m_MySceneObjects.emplace_back(pt4);
+
+
 
 
 }
@@ -45,6 +51,9 @@ void ResultScene::Init()
 // 更新
 void ResultScene::Update()
 {
+
+
+
 	// エンターキーを押してタイトルへ
 	if (Input::GetKeyTrigger(VK_RETURN))
 	{
