@@ -474,12 +474,43 @@ HRESULT Renderer::ResizeWindow(int width, int height)
 	// スワップチェインのバッファサイズを新しいウィンドウサイズに合わせて変更
 	m_pSwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, 0);
 
-	// レンダーターゲットビュー・デプスステンシルバッファ・デプスステンシルビュー作成
-	HRESULT hr = CreateRenderAndDepthResources();
+	// レンダーターゲットビュー作成
+	//HRESULT hr = CreateRenderAndDepthResources();
+	//if (FAILED(hr)) return hr;
+	ID3D11Texture2D* renderTarget;
+	HRESULT hr = m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&renderTarget);
 	if (FAILED(hr)) return hr;
+	hr = m_pDevice->CreateRenderTargetView(renderTarget, NULL, &m_pRenderTargetView);
+	renderTarget->Release();
+	if (FAILED(hr)) return hr;
+	// デプスステンシルバッファ
+	ID3D11Texture2D* depthStencile{};
+	D3D11_TEXTURE2D_DESC textureDesc{};
+	textureDesc.Width = width;   // バッファの幅をスワップチェーンに合わせる
+	textureDesc.Height = height; // バッファの高さをスワップチェーンに合わせる
+	textureDesc.MipLevels = 1;                            // ミップレベルは1（ミップマップは使用しない）
+	textureDesc.ArraySize = 1;                            // テクスチャの配列サイズ（通常1）
+	textureDesc.Format = DXGI_FORMAT_D16_UNORM;           // フォーマットは16ビットの深度バッファを使用
+	textureDesc.SampleDesc.Count = 1;                     // スワップチェーンと同じサンプル設定
+	textureDesc.SampleDesc.Quality = 0;                   // 同上
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;              // 使用方法はデフォルト（GPUで使用）
+	textureDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;     // 深度ステンシルバッファとして使用
+	textureDesc.CPUAccessFlags = 0;                       // CPUからのアクセスは不要
+	textureDesc.MiscFlags = 0;                            // その他のフラグは設定なし
+	hr = m_pDevice->CreateTexture2D(&textureDesc, NULL, &depthStencile);
+	if (FAILED(hr)) return hr;
+	// デプスステンシルビュー
+	D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc{};
+	depthStencilViewDesc.Format = textureDesc.Format; // デプスステンシルバッファのフォーマットを設定
+	depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D; // ビューの次元を2Dテクスチャとして設定（2Dテクスチャ用のデプスステンシルビュー）
+	depthStencilViewDesc.Flags = 0; // 特別なフラグは設定しない（デフォルトの動作）
+	hr = m_pDevice->CreateDepthStencilView(depthStencile, &depthStencilViewDesc, &m_pDepthStencilView);
+	if (FAILED(hr)) return hr;
+	depthStencile->Release();
 
 	// ウィンドウとターゲットのアスペクト比を比較してビューポートを調整
 	float windowAspect = (float)width / (float)height;
+	//float targetAspect = 1600 / 900;
 	float targetAspect = (float)Application::GetWidth() / (float)Application::GetHeight();
 
 	D3D11_VIEWPORT vi = {};
